@@ -1399,10 +1399,7 @@ footer {
 
 /* Shared resume design tokens. Namespaced with an `--r-` prefix so they
    can never collide with (or leak into) the app-chrome tokens above.
-   Consumed today by Modern and Classic; Minimal and Executive are left
-   on their pre-existing hardcoded sizes for a later pass, but can adopt
-   these same variables without redefining them since they're scoped to
-   every `.resume-*` template root, not the two consumers alone. */
+   Consumed by all four templates — Modern, Classic, Minimal and Executive. */
 .resume-modern,
 .resume-classic,
 .resume-minimal,
@@ -1535,55 +1532,70 @@ footer {
 .rcls-desc { font-size: var(--r-text); color: var(--r-ink); line-height: var(--r-lh); }
 .rcls-skills-list { font-size: var(--r-text); color: var(--r-ink); }
 
-/* Minimal */
+/* Minimal — single-column, whitespace-forward, quietest of the four. Typography
+   and restrained rules (not colour blocks) carry the identity. */
 .resume-minimal {
-  font-family: 'Arial', sans-serif;
-  font-size: 11px;
-  line-height: 1.55;
-  color: #111;
+  font-family: 'Inter', sans-serif;
+  font-size: var(--r-text);
+  line-height: var(--r-lh);
+  color: var(--r-ink);
   background: #fff;
-  display: grid;
-  grid-template-columns: 160px 1fr;
-  min-height: 100%;
+  padding: var(--r-sp-8) var(--r-margin) var(--r-sp-6);
 }
 
-.rmin-sidebar { background: #f5f5f5; padding: 32px 20px; }
-.rmin-avatar { width: 64px; height: 64px; border-radius: 50%; background: #333; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 22px; font-weight: 700; margin-bottom: 16px; }
-.rmin-name { font-size: 15px; font-weight: 700; margin-bottom: 4px; line-height: 1.2; }
-.rmin-title { font-size: 9px; color: #666; margin-bottom: 20px; }
-.rmin-label { font-size: 7.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: #333; margin: 14px 0 6px; }
-.rmin-detail { font-size: 9px; color: #555; margin-bottom: 3px; word-break: break-all; }
-.rmin-skill-bar { height: 4px; background: #ddd; border-radius: 2px; margin-bottom: 5px; }
-.rmin-skill-fill { height: 100%; background: #333; border-radius: 2px; }
-.rmin-skill-name { font-size: 8.5px; color: #333; margin-bottom: 2px; }
+.rmin-name { font-size: var(--r-name); font-weight: 600; letter-spacing: -0.01em; line-height: var(--r-lh-tight); margin-bottom: var(--r-sp-1); }
+.rmin-title { font-size: var(--r-title); font-weight: 400; color: var(--r-ink-soft); margin-bottom: var(--r-sp-2); }
+.rmin-contact { font-size: var(--r-text-sm); color: var(--r-ink-soft); margin-bottom: var(--r-sp-4); }
+.rmin-divider { border: none; border-top: 1px solid #ddd; margin: 0 0 var(--r-sp-5); }
 
-.rmin-main { padding: 32px 28px; }
-.rmin-section-title { font-size: 8.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; border-bottom: 2px solid #111; padding-bottom: 3px; margin: 14px 0 8px; }
-.rmin-exp-title { font-weight: 700; font-size: 10.5px; }
-.rmin-exp-sub { font-size: 9px; color: #666; margin-bottom: 4px; }
-.rmin-desc { font-size: 9.5px; color: #444; line-height: 1.55; margin-bottom: 10px; }
+.rmin-section { margin-bottom: var(--r-sp-5); }
+.rmin-section:last-child { margin-bottom: 0; }
+.rmin-section-title {
+  font-size: var(--r-section);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--r-ink-soft);
+  margin-bottom: var(--r-sp-3);
+}
 
-/* Executive */
+.rmin-item { margin-bottom: var(--r-sp-4); }
+.rmin-item:last-child { margin-bottom: 0; }
+.rmin-item-header { display: flex; justify-content: space-between; align-items: baseline; gap: var(--r-sp-2); }
+.rmin-item-title { font-weight: 600; font-size: var(--r-title); line-height: var(--r-lh-tight); color: var(--r-ink); }
+.rmin-item-date { font-size: var(--r-text-sm); color: var(--r-ink-soft); white-space: nowrap; }
+.rmin-item-sub { font-size: var(--r-text-sm); color: var(--r-ink-soft); margin-bottom: var(--r-sp-1); }
+.rmin-desc { font-size: var(--r-text); color: var(--r-ink); line-height: var(--r-lh); }
+
+/* Executive — light, premium, restrained. Seniority comes from typographic
+   confidence (Playfair Display name, generous whitespace) and a single
+   charcoal/navy accent, not a dark slab or gilded gimmicks. */
 .resume-executive {
-  font-family: 'Arial', sans-serif;
-  font-size: 11px;
-  line-height: 1.55;
-  color: #eee;
-  background: #0d0d0d;
+  font-family: 'Inter', sans-serif;
+  font-size: var(--r-text);
+  line-height: var(--r-lh);
+  color: var(--r-ink);
+  background: #fff;
 }
 
-.rexe-header { padding: 36px 40px 24px; border-bottom: 1px solid rgba(255,255,255,0.08); }
-.rexe-name { font-size: 26px; font-weight: 700; letter-spacing: 0.04em; margin-bottom: 4px; color: #fff; }
-.rexe-title { font-size: 11px; color: #d4af37; letter-spacing: 0.06em; margin-bottom: 16px; }
-.rexe-contact { display: flex; flex-wrap: wrap; gap: 16px; font-size: 9.5px; color: rgba(255,255,255,0.45); }
-.rexe-body { padding: 24px 40px; }
-.rexe-section-title { font-size: 8.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.14em; color: #d4af37; margin: 16px 0 8px; }
-.rexe-divider { border: none; border-top: 1px solid rgba(255,255,255,0.08); margin: 4px 0 12px; }
-.rexe-exp-title { font-weight: 700; font-size: 11px; color: #fff; }
-.rexe-exp-sub { font-size: 9.5px; color: rgba(255,255,255,0.5); margin-bottom: 4px; }
-.rexe-desc { font-size: 10px; color: rgba(255,255,255,0.65); line-height: 1.6; margin-bottom: 10px; }
-.rexe-skills { display: flex; flex-wrap: wrap; gap: 6px; }
-.rexe-skill { border: 1px solid rgba(212,175,55,0.35); color: #d4af37; border-radius: 2px; padding: 3px 9px; font-size: 8.5px; font-weight: 600; }
+.rexe-header { padding: var(--r-sp-8) var(--r-margin) var(--r-sp-5); border-bottom: 2px solid #1c2b3a; }
+.rexe-name { font-family: 'Playfair Display', serif; font-size: var(--r-name); font-weight: 700; letter-spacing: 0.01em; line-height: var(--r-lh-tight); margin-bottom: var(--r-sp-1); color: var(--r-ink); }
+.rexe-title { font-size: var(--r-title); font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase; color: #1c2b3a; margin-bottom: var(--r-sp-3); }
+.rexe-contact { display: flex; flex-wrap: wrap; gap: var(--r-sp-4); font-size: var(--r-text-sm); color: var(--r-ink-soft); }
+.rexe-body { padding: var(--r-sp-6) var(--r-margin); }
+.rexe-section { margin-bottom: var(--r-sp-5); }
+.rexe-section:last-child { margin-bottom: 0; }
+.rexe-section-title { font-size: var(--r-section); font-weight: 700; text-transform: uppercase; letter-spacing: 0.16em; color: #1c2b3a; margin-bottom: var(--r-sp-1); }
+.rexe-divider { border: none; border-top: 1px solid #ddd; margin: 0 0 var(--r-sp-3); }
+.rexe-item { margin-bottom: var(--r-sp-4); }
+.rexe-item:last-child { margin-bottom: 0; }
+.rexe-item-header { display: flex; justify-content: space-between; align-items: baseline; gap: var(--r-sp-2); }
+.rexe-item-date { font-size: var(--r-text-sm); color: var(--r-ink-soft); white-space: nowrap; }
+.rexe-exp-title { font-weight: 700; font-size: var(--r-title); line-height: var(--r-lh-tight); color: var(--r-ink); }
+.rexe-exp-sub { font-size: var(--r-text-sm); color: var(--r-ink-soft); margin-bottom: var(--r-sp-1); }
+.rexe-desc { font-size: var(--r-text); color: var(--r-ink); line-height: var(--r-lh); }
+.rexe-skills { display: flex; flex-wrap: wrap; gap: var(--r-sp-2); }
+.rexe-skill { border: 1px solid #c7ccd1; color: var(--r-ink); border-radius: 2px; padding: 3px 10px; font-size: var(--r-text-sm); font-weight: 500; }
 
 /* ---- RESPONSIVE ---- */
 @media (max-width: 900px) {
@@ -1650,8 +1662,6 @@ footer {
   .templates-grid { grid-template-columns: 1fr; }
   .features-grid { grid-template-columns: 1fr; }
   .form-row { grid-template-columns: 1fr; }
-  .resume-minimal { grid-template-columns: 1fr; }
-  .rmin-sidebar { border-right: none; border-bottom: 2px solid #e8e8e8; }
 }
 
 /* Mobile nav */
