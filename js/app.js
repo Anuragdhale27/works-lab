@@ -10,7 +10,7 @@
    ============================================================ */
 
 const CONFIG = {
-  PAYMENT_LINK: "PASTE_PAYMENT_LINK_HERE",   // ← PASTE YOUR PAYMENT LINK HERE
+  PAYMENT_LINK: "https://rzp.io/rzp/7gpzWZFg",   // ← PASTE YOUR PAYMENT LINK HERE
   PRODUCT_PRICE: 149,
   CURRENCY: "INR",
   SITE_NAME: "Works Lab",
