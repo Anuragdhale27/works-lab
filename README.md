@@ -4,7 +4,7 @@ Works Lab is a resume-builder site: ATS-friendly resume templates for the Indian
 guided form that renders a live preview, and a client-side PDF download — all for a one-time
 payment, no subscription.
 
-**Live site:** https://resume.workslab.in
+**Live site:** https://resume.workslab.in (deployed via GitHub Pages, see `.github/workflows/deploy.yml`)
 
 ## Stack
 
