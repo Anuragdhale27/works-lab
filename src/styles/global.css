@@ -1339,11 +1339,23 @@ footer {
   display: flex;
   align-items: center;
   gap: 4px;
+  white-space: nowrap;
 }
 
 .save-indicator.state-saving { color: var(--gray-400); }
 .save-indicator.state-saved { color: var(--green); }
 .save-indicator.state-error { color: #ef4444; }
+
+/* Two text variants for the save indicator: the full sentence on desktop,
+   a single short word on narrow phone widths. Each is display:none when
+   inactive, so assistive tech only ever announces the one in the a11y tree. */
+.save-indicator-short { display: none; }
+
+.builder-nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
 
 /* Mobile Edit/Preview toggle — hidden above the 900px breakpoint, where
    both panels are shown side by side as usual. */
@@ -1538,11 +1550,41 @@ footer {
   .template-detail-preview { position: static; }
 
   .builder-layout { grid-template-columns: 1fr; }
-  .builder-form-panel { height: auto; position: static; overflow: visible; }
+  /* Grid items default to min-width:auto, so the panel refuses to shrink below
+     the intrinsic width of .section-nav's nowrap pill strip (~1032px) and drags
+     the whole page into horizontal overflow. min-width:0 lets it shrink so the
+     nav's own overflow-x:auto actually scrolls. */
+  .builder-form-panel { height: auto; position: static; overflow: visible; min-width: 0; }
   .builder-preview-panel { height: auto; position: static; padding: 20px; }
 
   .builder-layout[data-mobile-view="edit"] .builder-preview-panel { display: none; }
   .builder-layout[data-mobile-view="preview"] .builder-form-panel { display: none; }
+
+  /* Builder top nav: drop the redundant template label (the template
+     <select> is already in the preview panel header) and hide the
+     preview panel's own Download PDF button so only the nav's survives —
+     the nav sits outside the Edit/Preview toggle, so it stays reachable
+     in both states. */
+  .builder-nav-template { display: none; }
+  .preview-header-download { display: none; }
+}
+
+@media (max-width: 480px) {
+  .nav-inner {
+    height: auto;
+    min-height: 56px;
+    padding: 10px 0;
+  }
+
+  .builder-nav-actions { gap: 8px; }
+
+  .save-indicator-full { display: none; }
+  .save-indicator-short { display: inline; }
+
+  .builder-nav-download {
+    padding: 8px 12px !important;
+    font-size: 0.8rem !important;
+  }
 }
 
 @media (max-width: 600px) {

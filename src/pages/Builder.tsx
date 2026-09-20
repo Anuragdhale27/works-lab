@@ -298,8 +298,8 @@ export function Builder() {
               <Link to="/" className="nav-logo">
                 Works<span>Lab</span>
               </Link>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                <span style={{ fontSize: '0.82rem', color: 'var(--gray-400)' }}>
+              <div className="builder-nav-actions">
+                <span className="builder-nav-template" style={{ fontSize: '0.82rem', color: 'var(--gray-600)' }}>
                   Template: <strong style={{ color: 'var(--black)' }}>{TEMPLATES[template].name}</strong>
                 </span>
                 <span
@@ -308,13 +308,20 @@ export function Builder() {
                   aria-live="polite"
                 >
                   <span aria-hidden="true">●</span>{' '}
-                  {saveState === 'saving' && 'Saving…'}
-                  {saveState === 'error' && "Couldn't save — storage unavailable"}
-                  {(saveState === 'saved' || saveState === 'idle') &&
-                    (savedAt ? 'Saved just now' : 'Auto-saved locally')}
+                  <span className="save-indicator-full">
+                    {saveState === 'saving' && 'Saving…'}
+                    {saveState === 'error' && "Couldn't save — storage unavailable"}
+                    {(saveState === 'saved' || saveState === 'idle') &&
+                      (savedAt ? 'Saved just now' : 'Auto-saved locally')}
+                  </span>
+                  <span className="save-indicator-short">
+                    {saveState === 'saving' && 'Saving'}
+                    {saveState === 'error' && 'Error'}
+                    {(saveState === 'saved' || saveState === 'idle') && 'Saved'}
+                  </span>
                 </span>
                 <button
-                  className="btn btn-primary"
+                  className="btn btn-primary builder-nav-download"
                   style={{ padding: '9px 20px', fontSize: '0.88rem' }}
                   onClick={downloadPDF}
                   disabled={downloading}
@@ -798,7 +805,7 @@ export function Builder() {
                     <option key={t.key} value={t.key}>{t.name}</option>
                   ))}
                 </select>
-                <button className="btn btn-primary" style={{ padding: '9px 18px', fontSize: '0.85rem' }} onClick={downloadPDF} disabled={downloading}>
+                <button className="btn btn-primary preview-header-download" style={{ padding: '9px 18px', fontSize: '0.85rem' }} onClick={downloadPDF} disabled={downloading}>
                   ⬇ {downloading ? 'Generating...' : 'Download PDF'}
                 </button>
               </div>
