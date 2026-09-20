@@ -1,0 +1,78 @@
+export interface PersonalInfo {
+  name: string;
+  title: string;
+  email: string;
+  phone: string;
+  location: string;
+  linkedin: string;
+  portfolio: string;
+}
+
+export interface ExperienceEntry {
+  company: string;
+  title: string;
+  location: string;
+  start: string;
+  end: string;
+  description: string;
+}
+
+export interface EducationEntry {
+  degree: string;
+  institution: string;
+  location: string;
+  start: string;
+  end: string;
+  description: string;
+}
+
+export interface ProjectEntry {
+  name: string;
+  tech: string;
+  url: string;
+  description: string;
+}
+
+export interface CertificationEntry {
+  name: string;
+  org: string;
+  year: string;
+  url: string;
+}
+
+export interface LanguageEntry {
+  lang: string;
+  level: string;
+}
+
+export interface ResumeData {
+  personal: PersonalInfo;
+  summary: string;
+  experience: ExperienceEntry[];
+  education: EducationEntry[];
+  skills: string[];
+  projects: ProjectEntry[];
+  certifications: CertificationEntry[];
+  languages: LanguageEntry[];
+}
+
+export const emptyResumeData: ResumeData = {
+  personal: {
+    name: '',
+    title: '',
+    email: '',
+    phone: '',
+    location: '',
+    linkedin: '',
+    portfolio: '',
+  },
+  summary: '',
+  experience: [],
+  education: [],
+  skills: [],
+  projects: [],
+  certifications: [],
+  languages: [],
+};
+
+export type TemplateKey = 'modern' | 'classic' | 'minimal' | 'executive';
