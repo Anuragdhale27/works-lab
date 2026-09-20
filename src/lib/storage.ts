@@ -21,10 +21,12 @@ export function loadResumeData(): ResumeData {
   return emptyResumeData;
 }
 
-export function saveResumeData(data: ResumeData): void {
+export function saveResumeData(data: ResumeData): boolean {
   try {
     window.localStorage.setItem(RESUME_STORAGE_KEY, JSON.stringify(data));
+    return true;
   } catch {
-    // Storage full or unavailable — silently skip persistence.
+    // Storage full or unavailable (quota exceeded, private browsing, etc).
+    return false;
   }
 }

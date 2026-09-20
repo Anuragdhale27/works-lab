@@ -1099,12 +1099,101 @@ footer {
 }
 
 .preview-wrapper {
+  overflow: auto;
+  padding: 8px;
+}
+
+.preview-wrapper.is-zoomed {
+  overflow: auto;
+}
+
+/* Fixed-size A4 page surface. Width/height are set inline (210mm / 297mm-multiples)
+   so the scale factor computed in JS lines up exactly. */
+.a4-page {
   background: var(--white);
   box-shadow: var(--shadow-lg);
-  border-radius: 8px;
-  overflow: hidden;
+  border-radius: 4px;
   border: 1px solid var(--gray-200);
+  transform-origin: top left;
+  position: relative;
 }
+
+.page-break-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+}
+
+.page-break-line {
+  position: absolute;
+  left: 0;
+  right: 0;
+  border-top: 2px dashed var(--accent);
+  display: flex;
+  justify-content: flex-end;
+}
+
+.page-break-label {
+  transform: translateY(-100%);
+  background: var(--accent);
+  color: var(--white);
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 0 0 0 4px;
+  letter-spacing: 0.02em;
+}
+
+.page-count-notice {
+  font-size: 0.78rem;
+  color: var(--gray-600);
+  background: var(--accent-light);
+  border: 1px solid var(--accent);
+  border-radius: var(--radius-sm);
+  padding: 6px 12px;
+  margin-bottom: 12px;
+}
+
+.zoom-controls {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--white);
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius-sm);
+  padding: 3px;
+}
+
+.zoom-controls button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--gray-600);
+  padding: 6px 10px;
+  border-radius: 4px;
+  transition: background var(--transition), color var(--transition);
+}
+
+.zoom-controls button:hover { background: var(--gray-100); }
+
+.zoom-controls button.active {
+  background: var(--black);
+  color: var(--white);
+}
+
+.save-indicator {
+  font-size: 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.save-indicator.state-saving { color: var(--gray-400); }
+.save-indicator.state-saved { color: var(--green); }
+.save-indicator.state-error { color: #ef4444; }
 
 /* ---- RESUME TEMPLATES OUTPUT ---- */
 

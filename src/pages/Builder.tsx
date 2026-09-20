@@ -17,6 +17,12 @@ import { useToast } from '../components/ToastProvider';
 
 const LEVELS = ['Native', 'Fluent', 'Professional', 'Conversational', 'Basic'];
 
+// A4 at 96dpi — the same dimensions html2pdf renders the PDF at.
+const A4_WIDTH_PX = 794;
+const A4_HEIGHT_PX = 1123;
+const ZOOM_STEPS = [0.5, 0.75, 1] as const;
+type ZoomMode = 'fit' | (typeof ZOOM_STEPS)[number];
+
 export function Builder() {
   const [searchParams] = useSearchParams();
   const { showToast } = useToast();
@@ -29,16 +35,81 @@ export function Builder() {
   const [downloading, setDownloading] = useState(false);
 
   const previewRef = useRef<HTMLDivElement>(null);
+  const wrapperRef = useRef<HTMLDivElement>(null);
+
+  // Zoom / fit state.
+  const [zoomMode, setZoomMode] = useState<ZoomMode>('fit');
+  const [fitScale, setFitScale] = useState(1);
+  const scale = zoomMode === 'fit' ? fitScale : zoomMode;
+
+  // Measured content height (unscaled px) used to compute page count and
+  // page-break offsets.
+  const [contentHeight, setContentHeight] = useState(A4_HEIGHT_PX);
+  const pageCount = Math.max(1, Math.ceil(contentHeight / A4_HEIGHT_PX));
+
+  // Save-state indicator.
+  const [saveState, setSaveState] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
+  const [savedAt, setSavedAt] = useState<Date | null>(null);
+  const saveTimeoutRef = useRef<number | undefined>(undefined);
+  const isFirstDataEffect = useRef(true);
 
   // Load persisted data on mount only.
   useEffect(() => {
     setData(loadResumeData());
   }, []);
 
-  // Persist on every change.
+  // Debounced persist on every change, with an honest saving/saved/error state.
   useEffect(() => {
-    saveResumeData(data);
+    if (isFirstDataEffect.current) {
+      // Don't show "saving" for the initial load-triggered render.
+      isFirstDataEffect.current = false;
+      return;
+    }
+    setSaveState('saving');
+    if (saveTimeoutRef.current) window.clearTimeout(saveTimeoutRef.current);
+    saveTimeoutRef.current = window.setTimeout(() => {
+      const ok = saveResumeData(data);
+      if (ok) {
+        setSaveState('saved');
+        setSavedAt(new Date());
+      } else {
+        setSaveState('error');
+      }
+    }, 500);
+    return () => {
+      if (saveTimeoutRef.current) window.clearTimeout(saveTimeoutRef.current);
+    };
   }, [data]);
+
+  // Keep the "fit" scale in sync with the panel's actual measured width.
+  useEffect(() => {
+    const wrapper = wrapperRef.current;
+    if (!wrapper) return;
+    function recompute() {
+      const w = wrapper!.clientWidth;
+      const padding = 16; // 8px each side, see .preview-wrapper
+      const available = Math.max(0, w - padding);
+      setFitScale(Math.min(1, available / A4_WIDTH_PX));
+    }
+    recompute();
+    const ro = new ResizeObserver(recompute);
+    ro.observe(wrapper);
+    return () => ro.disconnect();
+  }, []);
+
+  // Track the resume's actual rendered height so we know the page count and
+  // where each page-break falls.
+  useEffect(() => {
+    const el = previewRef.current;
+    if (!el) return;
+    function recompute() {
+      setContentHeight(el!.scrollHeight || A4_HEIGHT_PX);
+    }
+    recompute();
+    const ro = new ResizeObserver(recompute);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [data, template]);
 
   function updatePersonal(field: keyof ResumeData['personal'], value: string) {
     setData((d) => ({ ...d, personal: { ...d.personal, [field]: value } }));
@@ -131,8 +202,16 @@ export function Builder() {
                 <span style={{ fontSize: '0.82rem', color: 'var(--gray-400)' }}>
                   Template: <strong style={{ color: 'var(--black)' }}>{TEMPLATES[template].name}</strong>
                 </span>
-                <span style={{ fontSize: '0.75rem', color: 'var(--green)', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                  <span aria-hidden="true">●</span> Auto-saved
+                <span
+                  className={`save-indicator state-${saveState === 'idle' ? 'saved' : saveState}`}
+                  role="status"
+                  aria-live="polite"
+                >
+                  <span aria-hidden="true">●</span>{' '}
+                  {saveState === 'saving' && 'Saving…'}
+                  {saveState === 'error' && "Couldn't save — storage unavailable"}
+                  {(saveState === 'saved' || saveState === 'idle') &&
+                    (savedAt ? 'Saved just now' : 'Auto-saved locally')}
                 </span>
                 <button
                   className="btn btn-primary"
@@ -455,7 +534,28 @@ export function Builder() {
           <div className="builder-preview-panel">
             <div className="preview-header">
               <span className="preview-title">Live Preview</span>
-              <div style={{ display: 'flex', gap: '8px' }}>
+              <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
+                <div className="zoom-controls" role="group" aria-label="Preview zoom level">
+                  <button
+                    type="button"
+                    className={zoomMode === 'fit' ? 'active' : ''}
+                    aria-pressed={zoomMode === 'fit'}
+                    onClick={() => setZoomMode('fit')}
+                  >
+                    Fit
+                  </button>
+                  {ZOOM_STEPS.map((step) => (
+                    <button
+                      key={step}
+                      type="button"
+                      className={zoomMode === step ? 'active' : ''}
+                      aria-pressed={zoomMode === step}
+                      onClick={() => setZoomMode(step)}
+                    >
+                      {Math.round(step * 100)}%
+                    </button>
+                  ))}
+                </div>
                 <select
                   className="form-select"
                   style={{ width: 'auto', padding: '8px 12px', fontSize: '0.82rem' }}
@@ -472,9 +572,52 @@ export function Builder() {
                 </button>
               </div>
             </div>
-            <div className="preview-wrapper" style={{ overflow: 'hidden' }}>
-              <div ref={previewRef} style={{ transformOrigin: 'top left', minHeight: '297mm' }}>
-                <TemplateComponent data={data} />
+
+            {pageCount > 1 && (
+              <p className="page-count-notice">
+                {pageCount} pages — recruiters prefer 1 page for under 10 years of experience.
+              </p>
+            )}
+
+            <div className="preview-wrapper" ref={wrapperRef}>
+              <div
+                style={{
+                  width: A4_WIDTH_PX * scale,
+                  height: Math.max(contentHeight, A4_HEIGHT_PX) * scale,
+                }}
+              >
+                <div
+                  className="a4-page"
+                  style={{
+                    width: A4_WIDTH_PX,
+                    minHeight: A4_HEIGHT_PX,
+                    transform: `scale(${scale})`,
+                  }}
+                >
+                  <div ref={previewRef}>
+                    <TemplateComponent data={data} />
+                  </div>
+
+                  {/* Page-break indicators: a sibling of previewRef, so they are
+                      never inside the node html2pdf captures for the PDF. */}
+                  {pageCount > 1 && (
+                    <div
+                      className="page-break-overlay"
+                      aria-hidden="true"
+                      style={{ width: A4_WIDTH_PX, height: pageCount * A4_HEIGHT_PX }}
+                    >
+                      {Array.from({ length: pageCount - 1 }, (_, i) => (
+                        <div
+                          key={i}
+                          className="page-break-line"
+                          style={{ top: (i + 1) * A4_HEIGHT_PX }}
+                        >
+                          <span className="page-break-label">Page {i + 2}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           </div>
