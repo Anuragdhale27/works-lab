@@ -14,8 +14,12 @@ import { TEMPLATES, isTemplateKey } from '../templates';
 import { loadResumeData, saveResumeData } from '../lib/storage';
 import { SkipLink } from '../components/SkipLink';
 import { useToast } from '../components/ToastProvider';
+import { SectionNav } from '../components/SectionNav';
+import { sampleResumeData } from '../lib/sampleData';
+import { computeOverallProgress, isResumeDataEmpty } from '../lib/completeness';
 
 const LEVELS = ['Native', 'Fluent', 'Professional', 'Conversational', 'Basic'];
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 // A4 at 96dpi — the same dimensions html2pdf renders the PDF at.
 const A4_WIDTH_PX = 794;
@@ -36,6 +40,19 @@ export function Builder() {
 
   const previewRef = useRef<HTMLDivElement>(null);
   const wrapperRef = useRef<HTMLDivElement>(null);
+  const formPanelRef = useRef<HTMLDivElement>(null);
+
+  // Fields the user has blurred at least once — inline validation only kicks
+  // in after that, never while the user is still typing.
+  const [touched, setTouched] = useState<Set<string>>(new Set());
+  function markTouched(field: string) {
+    setTouched((prev) => {
+      if (prev.has(field)) return prev;
+      const next = new Set(prev);
+      next.add(field);
+      return next;
+    });
+  }
 
   // Zoom / fit state.
   const [zoomMode, setZoomMode] = useState<ZoomMode>('fit');
@@ -151,6 +168,23 @@ export function Builder() {
     });
   }
 
+  function loadExample() {
+    if (!isResumeDataEmpty(data)) {
+      const ok = window.confirm('This will replace your current entries with the example resume. Continue?');
+      if (!ok) return;
+    }
+    setData(sampleResumeData);
+    showToast('Example resume loaded — edit it to make it yours.');
+  }
+
+  function clearEverything() {
+    const ok = window.confirm('This will clear everything you’ve entered. Continue?');
+    if (!ok) return;
+    setData(emptyResumeData);
+    setTouched(new Set());
+    showToast('Form cleared.');
+  }
+
   const [skillInput, setSkillInput] = useState('');
 
   function addSkill() {
@@ -187,6 +221,8 @@ export function Builder() {
   }
 
   const TemplateComponent = TEMPLATES[template].Component;
+  const progress = computeOverallProgress(data);
+  const emailInvalid = touched.has('email') && data.personal.email.trim() !== '' && !EMAIL_RE.test(data.personal.email);
 
   return (
     <>
@@ -230,15 +266,38 @@ export function Builder() {
       <main id="main" tabIndex={-1}>
         <div className="builder-layout">
           {/* FORM PANEL */}
-          <div className="builder-form-panel">
+          <div className="builder-form-panel" ref={formPanelRef}>
             <div className="builder-form-header">
               <h2>Build Your Resume</h2>
               <p>Your information is saved on this device only.</p>
+
+              <div className="progress-block">
+                <div className="progress-row">
+                  <div className="progress-bar-track" role="progressbar" aria-valuenow={progress.percent} aria-valuemin={0} aria-valuemax={100} aria-label="Resume completeness">
+                    <div className="progress-bar-fill" style={{ width: `${progress.percent}%` }} />
+                  </div>
+                  <span className="progress-count">
+                    {progress.doneCount} of {progress.totalCount} essentials done
+                  </span>
+                </div>
+                {progress.nextAction && <p className="progress-next">{progress.nextAction}</p>}
+              </div>
+
+              <div className="form-header-actions">
+                <button type="button" className="btn btn-outline btn-sm" onClick={loadExample}>
+                  Load example resume
+                </button>
+                <button type="button" className="btn-text-danger" onClick={clearEverything}>
+                  Clear everything
+                </button>
+              </div>
+
+              <SectionNav data={data} containerRef={formPanelRef} />
             </div>
 
             <div className="builder-sections">
               {/* Personal Info */}
-              <div className="form-section">
+              <div className="form-section" id="section-personal">
                 <div className="form-section-title">Personal Information</div>
                 <div className="form-group">
                   <label className="form-label" htmlFor="name">Full Name</label>
@@ -251,7 +310,22 @@ export function Builder() {
                 <div className="form-row">
                   <div className="form-group">
                     <label className="form-label" htmlFor="email">Email</label>
-                    <input className="form-input" id="email" type="email" placeholder="rahul@email.com" value={data.personal.email} onChange={(e) => updatePersonal('email', e.target.value)} />
+                    <input
+                      className="form-input"
+                      id="email"
+                      type="email"
+                      placeholder="rahul@email.com"
+                      value={data.personal.email}
+                      onChange={(e) => updatePersonal('email', e.target.value)}
+                      onBlur={() => markTouched('email')}
+                      aria-invalid={emailInvalid || undefined}
+                      aria-describedby={emailInvalid ? 'email-error' : undefined}
+                    />
+                    {emailInvalid && (
+                      <p className="field-error" id="email-error">
+                        That doesn't look like a valid email address.
+                      </p>
+                    )}
                   </div>
                   <div className="form-group">
                     <label className="form-label" htmlFor="phone">Phone</label>
@@ -275,9 +349,12 @@ export function Builder() {
               </div>
 
               {/* Summary */}
-              <div className="form-section">
+              <div className="form-section" id="section-summary">
                 <div className="form-section-title">Professional Summary</div>
                 <div className="form-group">
+                  <p className="field-hint" id="summary-hint">
+                    2–3 sentences: your role, years of experience, and the kind of work you want next.
+                  </p>
                   <textarea
                     className="form-textarea"
                     id="summary"
@@ -285,14 +362,24 @@ export function Builder() {
                     placeholder="Write 2-3 sentences about your professional background, key skills, and what you bring to the role..."
                     value={data.summary}
                     onChange={(e) => updateSummary(e.target.value)}
+                    aria-describedby="summary-hint"
                   />
                 </div>
               </div>
 
               {/* Experience */}
-              <div className="form-section">
+              <div className="form-section" id="section-experience">
                 <div className="form-section-title">Work Experience</div>
-                {data.experience.map((exp, i) => (
+                <p className="field-hint" id="experience-hint">
+                  Start each line with an action verb and include a number where you can — &ldquo;Cut checkout
+                  drop-off by 18%&rdquo; beats &ldquo;Worked on checkout&rdquo;.
+                </p>
+                {data.experience.map((exp, i) => {
+                  const companyKey = `exp-${i}-company`;
+                  const titleKey = `exp-${i}-title`;
+                  const titleMissing = touched.has(titleKey) && exp.company.trim() !== '' && exp.title.trim() === '';
+                  const companyMissing = touched.has(companyKey) && exp.title.trim() !== '' && exp.company.trim() === '';
+                  return (
                   <div className="entry-card" key={i}>
                     <div className="entry-card-header">
                       <div className="entry-card-title">Experience {i + 1}</div>
@@ -301,11 +388,33 @@ export function Builder() {
                     <div className="form-row">
                       <div className="form-group">
                         <label className="form-label">Company</label>
-                        <input className="form-input" placeholder="Infosys" value={exp.company} onChange={(e) => updateEntry('experience', i, 'company', e.target.value)} />
+                        <input
+                          className="form-input"
+                          placeholder="Infosys"
+                          value={exp.company}
+                          onChange={(e) => updateEntry('experience', i, 'company', e.target.value)}
+                          onBlur={() => markTouched(companyKey)}
+                          aria-invalid={companyMissing || undefined}
+                          aria-describedby={companyMissing ? `${companyKey}-error` : undefined}
+                        />
+                        {companyMissing && (
+                          <p className="field-error" id={`${companyKey}-error`}>Add the company name.</p>
+                        )}
                       </div>
                       <div className="form-group">
                         <label className="form-label">Job Title</label>
-                        <input className="form-input" placeholder="Software Engineer" value={exp.title} onChange={(e) => updateEntry('experience', i, 'title', e.target.value)} />
+                        <input
+                          className="form-input"
+                          placeholder="Software Engineer"
+                          value={exp.title}
+                          onChange={(e) => updateEntry('experience', i, 'title', e.target.value)}
+                          onBlur={() => markTouched(titleKey)}
+                          aria-invalid={titleMissing || undefined}
+                          aria-describedby={titleMissing ? `${titleKey}-error` : undefined}
+                        />
+                        {titleMissing && (
+                          <p className="field-error" id={`${titleKey}-error`}>Add the job title.</p>
+                        )}
                       </div>
                     </div>
                     <div className="form-group">
@@ -327,7 +436,8 @@ export function Builder() {
                       <textarea className="form-textarea" placeholder="Describe your role and achievements..." value={exp.description} onChange={(e) => updateEntry('experience', i, 'description', e.target.value)} />
                     </div>
                   </div>
-                ))}
+                  );
+                })}
                 <button
                   className="btn-add-entry"
                   onClick={() =>
@@ -339,7 +449,7 @@ export function Builder() {
               </div>
 
               {/* Education */}
-              <div className="form-section">
+              <div className="form-section" id="section-education">
                 <div className="form-section-title">Education</div>
                 {data.education.map((edu, i) => (
                   <div className="entry-card" key={i}>
@@ -388,8 +498,11 @@ export function Builder() {
               </div>
 
               {/* Skills */}
-              <div className="form-section">
+              <div className="form-section" id="section-skills">
                 <div className="form-section-title">Skills</div>
+                <p className="field-hint" id="skills-hint">
+                  List tools and skills a recruiter might search for. 8–12 is plenty.
+                </p>
                 <div className="skill-tags">
                   {data.skills.map((s, i) => (
                     <span className="skill-tag" key={i}>
@@ -412,6 +525,7 @@ export function Builder() {
                         addSkill();
                       }
                     }}
+                    aria-describedby="skills-hint"
                   />
                   <button className="btn btn-outline btn-sm" onClick={addSkill}>Add</button>
                 </div>
@@ -421,7 +535,7 @@ export function Builder() {
               </div>
 
               {/* Projects */}
-              <div className="form-section">
+              <div className="form-section" id="section-projects">
                 <div className="form-section-title">Projects <span>(optional)</span></div>
                 {data.projects.map((pr, i) => (
                   <div className="entry-card" key={i}>
@@ -456,7 +570,7 @@ export function Builder() {
               </div>
 
               {/* Certifications */}
-              <div className="form-section">
+              <div className="form-section" id="section-certifications">
                 <div className="form-section-title">Certifications <span>(optional)</span></div>
                 {data.certifications.map((cert, i) => (
                   <div className="entry-card" key={i}>
@@ -495,7 +609,7 @@ export function Builder() {
               </div>
 
               {/* Languages */}
-              <div className="form-section">
+              <div className="form-section" id="section-languages">
                 <div className="form-section-title">Languages <span>(optional)</span></div>
                 {data.languages.map((lang, i) => (
                   <div className="entry-card" key={i}>
