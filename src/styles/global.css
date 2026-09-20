@@ -1305,6 +1305,13 @@ footer {
   margin-bottom: 12px;
 }
 
+/* One-line heads-up so the browser's print dialog isn't a surprise. */
+.print-hint {
+  font-size: 0.78rem;
+  color: var(--gray-400);
+  margin-bottom: 12px;
+}
+
 .zoom-controls {
   display: flex;
   align-items: center;
@@ -1805,3 +1812,62 @@ select:focus-visible,
 }
 
 main:focus { outline: none; }
+
+/* ======= PRINT EXPORT ======= */
+/* Builder.tsx's downloadPDF() calls window.print(). The resume is printed
+   from a *separate* copy portalled into #print-root (a body-level sibling
+   of #root, see index.html) rather than the on-screen .a4-page node.
+
+   Why: Chromium's print/PDF pipeline emits a blank page for content left
+   inside the on-screen layout — an ancestor that was ever laid out as a
+   CSS Grid (.builder-layout) or as an overflow:auto scroll container
+   (.preview-wrapper) fails to repaint for print even after @media print
+   resets its display/overflow back to normal. The whole app (#root, all
+   nav/form/preview chrome, the zoom-scaled on-screen A4 page, the
+   page-break indicators, toasts) is simply hidden and #print-root shown
+   in its place — no per-element hiding needed. */
+@media print {
+  @page {
+    size: A4;
+    margin: 0;
+  }
+
+  html,
+  body {
+    margin: 0 !important;
+    padding: 0 !important;
+    background: var(--white) !important;
+  }
+
+  #root {
+    display: none !important;
+  }
+
+  #print-root {
+    display: block !important;
+  }
+
+  .print-resume-page {
+    width: 210mm;
+    background: var(--white);
+  }
+
+  * {
+    print-color-adjust: exact !important;
+    -webkit-print-color-adjust: exact !important;
+  }
+
+  /* Don't split a single experience/education/project entry across a page
+     boundary mid-block. */
+  .rmod-exp-item,
+  .rmod-edu-item,
+  .rcls-exp-item,
+  .rexe-item,
+  .rmin-item {
+    break-inside: avoid;
+  }
+}
+
+#print-root {
+  display: none;
+}

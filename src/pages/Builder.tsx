@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useSearchParams } from 'react-router-dom';
 import { Link } from 'react-router-dom';
 import type {
@@ -21,7 +22,7 @@ import { computeOverallProgress, isResumeDataEmpty } from '../lib/completeness';
 const LEVELS = ['Native', 'Fluent', 'Professional', 'Conversational', 'Basic'];
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-// A4 at 96dpi — the same dimensions html2pdf renders the PDF at.
+// A4 at 96dpi — matches the @page A4 size the print export uses.
 const A4_WIDTH_PX = 794;
 const A4_HEIGHT_PX = 1123;
 const ZOOM_STEPS = [0.5, 0.75, 1] as const;
@@ -36,8 +37,6 @@ export function Builder() {
     const t = searchParams.get('template');
     return isTemplateKey(t ?? undefined) ? (t as TemplateKey) : 'modern';
   });
-  const [downloading, setDownloading] = useState(false);
-
   const previewRef = useRef<HTMLDivElement>(null);
   const wrapperRef = useRef<HTMLDivElement>(null);
   const formPanelRef = useRef<HTMLDivElement>(null);
@@ -262,26 +261,22 @@ export function Builder() {
     setData((d) => ({ ...d, skills: d.skills.filter((_, idx) => idx !== i) }));
   }
 
-  async function downloadPDF() {
-    const el = previewRef.current;
-    if (!el) return;
-    setDownloading(true);
-    try {
-      const html2pdf = (await import('html2pdf.js')).default;
-      const opt = {
-        margin: 0,
-        filename: `${(data.personal.name || 'resume').replace(/\s+/g, '_')}_resume.pdf`,
-        image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 2, useCORS: true, letterRendering: true },
-        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-      };
-      await html2pdf().set(opt).from(el).save();
-      showToast('Resume downloaded!');
-    } catch {
-      showToast('Download failed. Please try again.');
-    } finally {
-      setDownloading(false);
-    }
+  // Print-based export: a second, print-only copy of the resume is portalled
+  // into #print-root (a body-level sibling of #root, see index.html) and
+  // window.print() hands it straight to the browser's own print pipeline —
+  // a real, text-based, ATS-parseable PDF, unlike the rasterized image
+  // html2pdf used to produce. The portal exists because Chromium's print/PDF
+  // pipeline emits a blank page for content left inside the on-screen
+  // layout: an ancestor that was ever laid out as a CSS Grid (.builder-layout)
+  // or an overflow:auto scroll container (.preview-wrapper) fails to repaint
+  // for print even after @media print resets display/overflow back to
+  // normal — so the resume is printed from an isolated, never-scrolled,
+  // never-grid-parented copy instead. We can't detect whether the user
+  // actually chose "Save as PDF" or cancelled the dialog, so we don't claim
+  // success either way.
+  function downloadPDF() {
+    showToast('Opening the print dialog — choose "Save as PDF" as the destination.');
+    window.print();
   }
 
   const TemplateComponent = TEMPLATES[template].Component;
@@ -324,9 +319,9 @@ export function Builder() {
                   className="btn btn-primary builder-nav-download"
                   style={{ padding: '9px 20px', fontSize: '0.88rem' }}
                   onClick={downloadPDF}
-                  disabled={downloading}
+                  title='In the dialog that opens, choose "Save as PDF" as the destination.'
                 >
-                  {downloading ? 'Generating...' : 'Download PDF'}
+                  Download PDF
                 </button>
               </div>
             </div>
@@ -805,11 +800,20 @@ export function Builder() {
                     <option key={t.key} value={t.key}>{t.name}</option>
                   ))}
                 </select>
-                <button className="btn btn-primary preview-header-download" style={{ padding: '9px 18px', fontSize: '0.85rem' }} onClick={downloadPDF} disabled={downloading}>
-                  ⬇ {downloading ? 'Generating...' : 'Download PDF'}
+                <button
+                  className="btn btn-primary preview-header-download"
+                  style={{ padding: '9px 18px', fontSize: '0.85rem' }}
+                  onClick={downloadPDF}
+                  title='In the dialog that opens, choose "Save as PDF" as the destination.'
+                >
+                  ⬇ Download PDF
                 </button>
               </div>
             </div>
+
+            <p className="print-hint">
+              This opens your browser's print dialog — choose <strong>Save as PDF</strong> as the destination.
+            </p>
 
             {pageCount > 1 && (
               <p className="page-count-notice">
@@ -836,8 +840,9 @@ export function Builder() {
                     <TemplateComponent data={data} />
                   </div>
 
-                  {/* Page-break indicators: a sibling of previewRef, so they are
-                      never inside the node html2pdf captures for the PDF. */}
+                  {/* Page-break indicators: a sibling of previewRef, and
+                      screen-only — the print export uses a separate portal
+                      (see the bottom of this component), never this node. */}
                   {pageCount > 1 && (
                     <div
                       className="page-break-overlay"
@@ -861,6 +866,18 @@ export function Builder() {
           </div>
         </div>
       </main>
+
+      {/* Print-only portal (see downloadPDF() above for why this can't just
+          be the on-screen .a4-page node). #print-root is a body-level
+          sibling of #root defined in index.html and is display:none on
+          screen — visible only under @media print. */}
+      {document.getElementById('print-root') &&
+        createPortal(
+          <div className="print-resume-page">
+            <TemplateComponent data={data} />
+          </div>,
+          document.getElementById('print-root')!,
+        )}
     </>
   );
 }

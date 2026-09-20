@@ -3,7 +3,7 @@ import { multiline } from '../lib/multiline';
 
 export function ExecutiveTemplate({ data }: { data: ResumeData }) {
   const p = data.personal;
-  const contactParts = [p.email, p.phone, p.location, p.linkedin].filter(Boolean);
+  const contactParts = [p.email, p.phone, p.location, p.linkedin, p.portfolio].filter(Boolean);
   return (
     <div className="resume-executive">
       <div className="rexe-header">

@@ -11,6 +11,13 @@
   </head>
   <body>
     <div id="root"></div>
+    <!-- Print target: a portal for the resume only (see downloadPDF() in
+         Builder.tsx). Kept as a body-level sibling of #root — never nested
+         inside the builder's CSS Grid layout or any scrolling ancestor — so
+         the browser's print pipeline paginates it cleanly instead of
+         emitting a blank page, which is what happens when a grid/scroll
+         container is switched to print styles in place. -->
+    <div id="print-root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
