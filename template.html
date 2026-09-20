@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Template Preview — Works Lab</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="css/style.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%232563eb'/><text y='22' x='6' font-size='18' font-family='Arial' font-weight='900' fill='white'>W</text></svg>">
+</head>
+<body>
+
+<nav>
+  <div class="container">
+    <div class="nav-inner">
+      <a href="index.html" class="nav-logo">Works<span>Lab</span></a>
+      <ul class="nav-links">
+        <li><a href="index.html#templates">Templates</a></li>
+        <li><a href="index.html#faq">FAQ</a></li>
+        <li><a href="index.html#templates" class="nav-cta" id="navBuyBtn">Build Resume – ₹149</a></li>
+      </ul>
+      <button class="nav-menu-btn" id="mobileMenuBtn"><span></span><span></span><span></span></button>
+    </div>
+  </div>
+</nav>
+
+<div class="mobile-nav" id="mobileNav">
+  <a href="index.html#templates">Templates</a>
+  <a href="index.html#faq">FAQ</a>
+  <a href="#" id="mobileBuyBtn" style="color:var(--accent);font-weight:700">Build Resume – ₹149</a>
+</div>
+
+<section class="template-detail-hero">
+  <div class="container">
+    <a href="index.html#templates" class="back-link">← Back to templates</a>
+
+    <div class="template-detail-inner">
+
+      <!-- Live preview -->
+      <div class="template-detail-preview">
+        <div class="template-detail-frame" id="templateFrame">
+          <!-- Rendered by JS -->
+        </div>
+      </div>
+
+      <!-- Info -->
+      <div class="template-detail-content">
+        <span class="badge badge-green">ATS Friendly ✓</span>
+        <h1 class="section-title" id="tplName" style="margin-top:16px">Modern ATS</h1>
+
+        <div class="template-meta">
+          <span id="tplBest" style="font-size:0.88rem;color:var(--gray-600)">Best for: Software / IT / Tech</span>
+        </div>
+
+        <p id="tplDesc" style="font-size:0.95rem;color:var(--gray-600);line-height:1.7;margin-bottom:24px">
+          A clean, structured resume with a bold header and clear section hierarchy. Designed to perform well with modern ATS systems used by tech companies.
+        </p>
+
+        <div class="template-price-large">₹149</div>
+        <div class="template-price-note">One-time payment · Instant access · No subscription</div>
+
+        <ul class="template-features">
+          <li>ATS-friendly HTML structure</li>
+          <li>Professional, recruiter-tested layout</li>
+          <li>Easy guided form — no design skills needed</li>
+          <li>Live preview as you type</li>
+          <li>Download as clean A4 PDF</li>
+          <li>Saved to your browser — edit any time</li>
+        </ul>
+
+        <button class="btn btn-primary btn-lg" id="buyBtn" style="width:100%">Use This Template – ₹149</button>
+        <p style="font-size:0.78rem;color:var(--gray-400);text-align:center;margin-top:12px">Secure payment · Works on any device</p>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- Other templates -->
+<section style="background:var(--gray-100);padding:60px 0">
+  <div class="container">
+    <h2 class="section-title" style="font-size:1.6rem;margin-bottom:32px">Other templates</h2>
+    <div class="templates-grid" id="otherTemplates"></div>
+  </div>
+</section>
+
+<footer>
+  <div class="container">
+    <div class="footer-inner">
+      <div>
+        <div class="footer-brand-name">Works<span style="color:var(--accent)">Lab</span></div>
+        <div class="footer-brand-desc">Digital products built to be useful.</div>
+      </div>
+      <ul class="footer-links">
+        <li><a href="index.html#templates">Templates</a></li>
+        <li><a href="index.html#faq">FAQ</a></li>
+        <li><a href="mailto:hello@workslab.in">Contact</a></li>
+      </ul>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2025 Works Lab. All rights reserved.</span>
+      <span>Made in India 🇮🇳</span>
+    </div>
+  </div>
+</footer>
+
+<script src="js/app.js"></script>
+<script src="js/builder.js"></script>
+<script>
+(function() {
+  const params = new URLSearchParams(window.location.search);
+  const key = params.get("template") || "modern";
+  const tpl = TEMPLATES[key];
+
+  // Update meta
+  document.getElementById("tplName").textContent = tpl ? tpl.name : "Modern ATS";
+  document.getElementById("tplBest").textContent = "Best for: " + (tpl ? tpl.best : "");
+  document.title = (tpl ? tpl.name : "Modern") + " — Works Lab";
+
+  const descs = {
+    modern: "A clean, structured resume with a bold header and clear section hierarchy. Built for tech roles where clarity and keywords matter most.",
+    classic: "A traditional, serif-based layout trusted in finance, law, and corporate environments. Conveys experience and professionalism at a glance.",
+    minimal: "A two-column sidebar layout — perfect for freshers to emphasise skills and education without looking sparse. Clean and modern.",
+    executive: "A premium dark-theme resume designed for senior leaders. Command attention with a distinctive format that stands apart from the crowd."
+  };
+  document.getElementById("tplDesc").textContent = descs[key] || descs.modern;
+
+  // Render sample resume
+  const sampleData = {
+    personal: { name: "Rahul Sharma", title: "Software Engineer", email: "rahul@email.com", phone: "+91 98765 43210", location: "Bengaluru, India", linkedin: "linkedin.com/in/rahuls", portfolio: "github.com/rahuls" },
+    summary: "Results-driven software engineer with 3+ years of experience building scalable web applications. Proficient in React, Node.js, and cloud infrastructure.",
+    experience: [
+      { company: "Infosys", title: "Senior Software Engineer", location: "Bengaluru", start: "Jun 2022", end: "Present", description: "Led development of microservices architecture serving 500K+ daily users. Reduced API response time by 40% through caching and query optimisation." },
+      { company: "Wipro", title: "Software Engineer", location: "Hyderabad", start: "Jul 2020", end: "May 2022", description: "Built RESTful APIs and React dashboards for enterprise clients in the BFSI sector." }
+    ],
+    education: [{ degree: "B.Tech Computer Science", institution: "VIT Vellore", location: "Vellore", start: "2016", end: "2020", description: "CGPA: 8.7" }],
+    skills: ["React", "Node.js", "Python", "AWS", "PostgreSQL", "Docker", "Git"],
+    projects: [{ name: "E-Commerce Platform", tech: "React, Node.js, MongoDB", url: "github.com/rahuls/shop", description: "Full-stack marketplace with payment integration and real-time inventory." }],
+    certifications: [{ name: "AWS Cloud Practitioner", org: "Amazon Web Services", year: "2023", url: "" }],
+    languages: [{ lang: "English", level: "Professional" }, { lang: "Hindi", level: "Native" }]
+  };
+
+  const frame = document.getElementById("templateFrame");
+  const renderer = templateRenderers[key] || renderModernResume;
+  frame.innerHTML = '<div style="transform:scale(0.58);transform-origin:top left;width:172%;height:172%;pointer-events:none">' + renderer(sampleData) + '</div>';
+
+  // Buy buttons
+  [document.getElementById("buyBtn"), document.getElementById("navBuyBtn"), document.getElementById("mobileBuyBtn")].forEach(btn => {
+    if (btn) btn.addEventListener("click", () => goToPayment(key));
+  });
+
+  // Other templates
+  const otherEl = document.getElementById("otherTemplates");
+  if (otherEl) {
+    Object.entries(TEMPLATES).filter(([k]) => k !== key).slice(0,3).forEach(([k, t]) => {
+      otherEl.innerHTML += `
+        <div class="template-card" onclick="window.location.href='template.html?template=${k}'" style="cursor:pointer">
+          <div class="template-preview" style="display:flex;align-items:center;justify-content:center;background:var(--gray-100)">
+            <span style="font-size:0.85rem;font-weight:600;color:var(--gray-600)">${t.name}</span>
+          </div>
+          <div class="template-card-body">
+            <div class="template-card-name">${t.name}</div>
+            <div class="template-card-tag">Best for: ${t.best}</div>
+            <div class="template-card-footer">
+              <div class="template-price">₹149</div>
+              <button class="btn btn-primary btn-sm" onclick="event.stopPropagation();goToPayment('${k}')">Get This</button>
+            </div>
+          </div>
+        </div>`;
+    });
+  }
+})();
+</script>
+</body>
+</html>

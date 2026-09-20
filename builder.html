@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Resume Builder — Works Lab</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="css/style.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%232563eb'/><text y='22' x='6' font-size='18' font-family='Arial' font-weight='900' fill='white'>W</text></svg>">
+</head>
+<body style="overflow:hidden">
+
+<nav>
+  <div class="container">
+    <div class="nav-inner">
+      <a href="index.html" class="nav-logo">Works<span>Lab</span></a>
+      <div style="display:flex;align-items:center;gap:16px">
+        <span style="font-size:0.82rem;color:var(--gray-400)">Template: <strong id="selectedTemplateName" style="color:var(--black)">Modern ATS</strong></span>
+        <span style="font-size:0.75rem;color:var(--green);display:flex;align-items:center;gap:4px">
+          <span>●</span> Auto-saved
+        </span>
+        <button class="btn btn-primary" id="downloadBtn" style="padding:9px 20px;font-size:0.88rem">Download PDF</button>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<div class="builder-layout">
+
+  <!-- FORM PANEL -->
+  <div class="builder-form-panel">
+    <div class="builder-form-header">
+      <h2>Build Your Resume</h2>
+      <p>Your information is saved on this device only.</p>
+    </div>
+
+    <div class="builder-sections">
+
+      <!-- 1. Personal Info -->
+      <div class="form-section">
+        <div class="form-section-title">Personal Information</div>
+        <div class="form-group">
+          <label class="form-label" for="name">Full Name</label>
+          <input class="form-input" id="name" placeholder="Rahul Sharma">
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="title">Professional Title</label>
+          <input class="form-input" id="title" placeholder="Software Engineer">
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="email">Email</label>
+            <input class="form-input" id="email" type="email" placeholder="rahul@email.com">
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="phone">Phone</label>
+            <input class="form-input" id="phone" placeholder="+91 98765 43210">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="location">Location</label>
+          <input class="form-input" id="location" placeholder="Bengaluru, India">
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="linkedin">LinkedIn</label>
+            <input class="form-input" id="linkedin" placeholder="linkedin.com/in/yourname">
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="portfolio">GitHub / Portfolio</label>
+            <input class="form-input" id="portfolio" placeholder="github.com/yourname">
+          </div>
+        </div>
+      </div>
+
+      <!-- 2. Summary -->
+      <div class="form-section">
+        <div class="form-section-title">Professional Summary</div>
+        <div class="form-group">
+          <textarea class="form-textarea" id="summary" rows="4" placeholder="Write 2-3 sentences about your professional background, key skills, and what you bring to the role..."></textarea>
+        </div>
+      </div>
+
+      <!-- 3. Experience -->
+      <div class="form-section">
+        <div class="form-section-title">Work Experience</div>
+        <div id="expEntries"></div>
+        <button class="btn-add-entry" onclick="addExp()">+ Add Work Experience</button>
+      </div>
+
+      <!-- 4. Education -->
+      <div class="form-section">
+        <div class="form-section-title">Education</div>
+        <div id="eduEntries"></div>
+        <button class="btn-add-entry" onclick="addEdu()">+ Add Education</button>
+      </div>
+
+      <!-- 5. Skills -->
+      <div class="form-section">
+        <div class="form-section-title">Skills</div>
+        <div class="skill-tags" id="skillTags"></div>
+        <div class="skill-input-row">
+          <input class="form-input" id="skillInput" placeholder="e.g. React, Python, Figma..." style="margin:0">
+          <button class="btn btn-outline btn-sm" onclick="addSkill()">Add</button>
+        </div>
+        <p style="font-size:0.75rem;color:var(--gray-400);margin-top:6px">Press Enter or click Add to add each skill.</p>
+      </div>
+
+      <!-- 6. Projects -->
+      <div class="form-section">
+        <div class="form-section-title">Projects <span>(optional)</span></div>
+        <div id="projEntries"></div>
+        <button class="btn-add-entry" onclick="addProj()">+ Add Project</button>
+      </div>
+
+      <!-- 7. Certifications -->
+      <div class="form-section">
+        <div class="form-section-title">Certifications <span>(optional)</span></div>
+        <div id="certEntries"></div>
+        <button class="btn-add-entry" onclick="addCert()">+ Add Certification</button>
+      </div>
+
+      <!-- 8. Languages -->
+      <div class="form-section">
+        <div class="form-section-title">Languages <span>(optional)</span></div>
+        <div id="langEntries"></div>
+        <button class="btn-add-entry" onclick="addLang()">+ Add Language</button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- PREVIEW PANEL -->
+  <div class="builder-preview-panel">
+    <div class="preview-header">
+      <span class="preview-title">Live Preview</span>
+      <div style="display:flex;gap:8px">
+        <select id="templateSwitcher" class="form-select" style="width:auto;padding:8px 12px;font-size:0.82rem">
+          <option value="modern">Modern ATS</option>
+          <option value="classic">Classic ATS</option>
+          <option value="minimal">Minimal ATS</option>
+          <option value="executive">Executive ATS</option>
+        </select>
+        <button class="btn btn-primary" id="downloadBtn2" style="padding:9px 18px;font-size:0.85rem">⬇ Download PDF</button>
+      </div>
+    </div>
+    <div class="preview-wrapper" style="overflow:hidden">
+      <div id="resumePreview" style="transform-origin:top left;min-height:297mm"></div>
+    </div>
+  </div>
+
+</div>
+
+<script src="js/app.js"></script>
+<script src="js/builder.js"></script>
+<!-- html2pdf via CDN -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+  // Second download button
+  const dl2 = document.getElementById("downloadBtn2");
+  if (dl2) dl2.addEventListener("click", downloadPDF);
+
+  // Template switcher
+  const switcher = document.getElementById("templateSwitcher");
+  if (switcher) {
+    switcher.value = currentTemplate;
+    switcher.addEventListener("change", function() {
+      currentTemplate = this.value;
+      const nameEl = document.getElementById("selectedTemplateName");
+      if (nameEl && TEMPLATES[currentTemplate]) nameEl.textContent = TEMPLATES[currentTemplate].name;
+      renderPreview();
+    });
+  }
+});
+</script>
+</body>
+</html>
