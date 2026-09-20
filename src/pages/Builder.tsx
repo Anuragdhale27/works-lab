@@ -11,7 +11,7 @@ import type {
 } from '../types/resume';
 import { emptyResumeData, type TemplateKey } from '../types/resume';
 import { TEMPLATES, isTemplateKey } from '../templates';
-import { loadResumeData, saveResumeData } from '../lib/storage';
+import { loadResumeData, saveResumeData, validateResumeData } from '../lib/storage';
 import { SkipLink } from '../components/SkipLink';
 import { useToast } from '../components/ToastProvider';
 import { SectionNav } from '../components/SectionNav';
@@ -41,6 +41,11 @@ export function Builder() {
   const previewRef = useRef<HTMLDivElement>(null);
   const wrapperRef = useRef<HTMLDivElement>(null);
   const formPanelRef = useRef<HTMLDivElement>(null);
+  const importInputRef = useRef<HTMLInputElement>(null);
+
+  // Mobile-only Edit/Preview toggle. Ignored above the 900px breakpoint,
+  // where both panels are always shown side by side.
+  const [mobileView, setMobileView] = useState<'edit' | 'preview'>('edit');
 
   // Fields the user has blurred at least once — inline validation only kicks
   // in after that, never while the user is still typing.
@@ -114,6 +119,19 @@ export function Builder() {
     return () => ro.disconnect();
   }, []);
 
+  // Re-measure when the mobile Edit/Preview toggle reveals the preview
+  // panel — it goes from display:none (0 width) to its real width, and
+  // that transition isn't always caught by the ResizeObserver callback
+  // above before paint.
+  useEffect(() => {
+    const wrapper = wrapperRef.current;
+    if (!wrapper) return;
+    const w = wrapper.clientWidth;
+    const padding = 16;
+    const available = Math.max(0, w - padding);
+    setFitScale(Math.min(1, available / A4_WIDTH_PX));
+  }, [mobileView]);
+
   // Track the resume's actual rendered height so we know the page count and
   // where each page-break falls.
   useEffect(() => {
@@ -183,6 +201,52 @@ export function Builder() {
     setData(emptyResumeData);
     setTouched(new Set());
     showToast('Form cleared.');
+  }
+
+  function exportData() {
+    const base = data.personal.name.trim().replace(/\s+/g, '_') || 'resume';
+    const filename = `${base}_workslab_export.json`;
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+    showToast('Resume data exported.');
+  }
+
+  function triggerImport() {
+    importInputRef.current?.click();
+  }
+
+  function handleImportFile(file: File) {
+    const reader = new FileReader();
+    reader.onload = () => {
+      let parsed: unknown;
+      try {
+        parsed = JSON.parse(String(reader.result));
+      } catch {
+        showToast("That file isn't valid JSON — import cancelled.");
+        return;
+      }
+      const validated = validateResumeData(parsed);
+      if (!validated) {
+        showToast("That doesn't look like a Works Lab resume export — import cancelled.");
+        return;
+      }
+      if (!isResumeDataEmpty(data)) {
+        const ok = window.confirm('This will replace your current entries with the imported resume. Continue?');
+        if (!ok) return;
+      }
+      setData(validated);
+      setTouched(new Set());
+      showToast('Resume imported.');
+    };
+    reader.onerror = () => showToast("Couldn't read that file — import cancelled.");
+    reader.readAsText(file);
   }
 
   const [skillInput, setSkillInput] = useState('');
@@ -264,9 +328,39 @@ export function Builder() {
       </div>
 
       <main id="main" tabIndex={-1}>
-        <div className="builder-layout">
+        <div className="mobile-view-toggle" role="tablist" aria-label="Builder view">
+          <button
+            type="button"
+            role="tab"
+            id="mobile-tab-edit"
+            aria-controls="mobile-panel-edit"
+            aria-selected={mobileView === 'edit'}
+            className={mobileView === 'edit' ? 'active' : ''}
+            onClick={() => setMobileView('edit')}
+          >
+            Edit
+          </button>
+          <button
+            type="button"
+            role="tab"
+            id="mobile-tab-preview"
+            aria-controls="mobile-panel-preview"
+            aria-selected={mobileView === 'preview'}
+            className={mobileView === 'preview' ? 'active' : ''}
+            onClick={() => setMobileView('preview')}
+          >
+            Preview
+          </button>
+        </div>
+        <div className="builder-layout" data-mobile-view={mobileView}>
           {/* FORM PANEL */}
-          <div className="builder-form-panel" ref={formPanelRef}>
+          <div
+            className="builder-form-panel"
+            ref={formPanelRef}
+            role="tabpanel"
+            id="mobile-panel-edit"
+            aria-labelledby="mobile-tab-edit"
+          >
             <div className="builder-form-header">
               <h2>Build Your Resume</h2>
               <p>Your information is saved on this device only.</p>
@@ -287,6 +381,24 @@ export function Builder() {
                 <button type="button" className="btn btn-outline btn-sm" onClick={loadExample}>
                   Load example resume
                 </button>
+                <button type="button" className="btn btn-outline btn-sm" onClick={exportData}>
+                  Export JSON
+                </button>
+                <button type="button" className="btn btn-outline btn-sm" onClick={triggerImport}>
+                  Import JSON
+                </button>
+                <input
+                  ref={importInputRef}
+                  type="file"
+                  accept="application/json,.json"
+                  className="sr-only"
+                  aria-label="Import resume JSON file"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) handleImportFile(file);
+                    e.target.value = '';
+                  }}
+                />
                 <button type="button" className="btn-text-danger" onClick={clearEverything}>
                   Clear everything
                 </button>
@@ -645,7 +757,12 @@ export function Builder() {
           </div>
 
           {/* PREVIEW PANEL */}
-          <div className="builder-preview-panel">
+          <div
+            className="builder-preview-panel"
+            role="tabpanel"
+            id="mobile-panel-preview"
+            aria-labelledby="mobile-tab-preview"
+          >
             <div className="preview-header">
               <span className="preview-title">Live Preview</span>
               <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>

@@ -1345,6 +1345,44 @@ footer {
 .save-indicator.state-saved { color: var(--green); }
 .save-indicator.state-error { color: #ef4444; }
 
+/* Mobile Edit/Preview toggle — hidden above the 900px breakpoint, where
+   both panels are shown side by side as usual. */
+.mobile-view-toggle {
+  display: none;
+}
+
+@media (max-width: 900px) {
+  .mobile-view-toggle {
+    display: flex;
+    gap: 8px;
+    position: sticky;
+    top: 64px;
+    z-index: 20;
+    background: var(--white);
+    border-bottom: 1px solid var(--gray-200);
+    padding: 10px 16px;
+  }
+
+  .mobile-view-toggle button {
+    flex: 1;
+    padding: 10px;
+    border-radius: var(--radius);
+    border: 1px solid var(--gray-200);
+    background: var(--gray-100);
+    color: var(--gray-600);
+    font-weight: 600;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: background var(--transition), color var(--transition);
+  }
+
+  .mobile-view-toggle button[aria-selected="true"] {
+    background: var(--black);
+    color: var(--white);
+    border-color: var(--black);
+  }
+}
+
 /* ---- RESUME TEMPLATES OUTPUT ---- */
 
 /* Modern */
@@ -1502,6 +1540,9 @@ footer {
   .builder-layout { grid-template-columns: 1fr; }
   .builder-form-panel { height: auto; position: static; overflow: visible; }
   .builder-preview-panel { height: auto; position: static; padding: 20px; }
+
+  .builder-layout[data-mobile-view="edit"] .builder-preview-panel { display: none; }
+  .builder-layout[data-mobile-view="preview"] .builder-form-panel { display: none; }
 }
 
 @media (max-width: 600px) {

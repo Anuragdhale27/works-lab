@@ -2,6 +2,93 @@ import { emptyResumeData, type ResumeData } from '../types/resume';
 
 export const RESUME_STORAGE_KEY = 'workslab_resume_data';
 
+const KNOWN_TOP_LEVEL_KEYS = [
+  'personal',
+  'summary',
+  'experience',
+  'education',
+  'skills',
+  'projects',
+  'certifications',
+  'languages',
+] as const;
+
+const ARRAY_FIELDS = [
+  'experience',
+  'education',
+  'skills',
+  'projects',
+  'certifications',
+  'languages',
+] as const;
+
+function isPlainObject(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function sanitizeStringArray(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  return value.filter((v): v is string => typeof v === 'string');
+}
+
+function sanitizeEntryArray<T extends Record<string, string>>(value: unknown, shape: T): T[] {
+  if (!Array.isArray(value)) return [];
+  return value.filter(isPlainObject).map((item) => {
+    const out = { ...shape };
+    for (const key of Object.keys(shape) as Array<keyof T>) {
+      const raw = item[key as string];
+      out[key] = (typeof raw === 'string' ? raw : '') as T[keyof T];
+    }
+    return out;
+  });
+}
+
+/**
+ * Validates and sanitizes data coming from an imported .json file. Returns
+ * null when the shape is not recognizably a resume export — callers should
+ * surface an error and never fall back to blindly trusting the input.
+ *
+ * A field that is present but the wrong *type* (e.g. `experience` being a
+ * string instead of an array) is treated as a sign the whole file is
+ * corrupt/hand-edited and rejects the import, rather than silently
+ * discarding that field.
+ */
+export function validateResumeData(raw: unknown): ResumeData | null {
+  if (!isPlainObject(raw)) return null;
+  if (!KNOWN_TOP_LEVEL_KEYS.some((k) => k in raw)) return null;
+  if (raw.personal !== undefined && !isPlainObject(raw.personal)) return null;
+  if (raw.summary !== undefined && typeof raw.summary !== 'string') return null;
+  for (const field of ARRAY_FIELDS) {
+    if (raw[field] !== undefined && !Array.isArray(raw[field])) return null;
+  }
+
+  const personalRaw = isPlainObject(raw.personal) ? raw.personal : {};
+  const stringField = (v: unknown) => (typeof v === 'string' ? v : '');
+
+  return {
+    personal: {
+      name: stringField(personalRaw.name),
+      title: stringField(personalRaw.title),
+      email: stringField(personalRaw.email),
+      phone: stringField(personalRaw.phone),
+      location: stringField(personalRaw.location),
+      linkedin: stringField(personalRaw.linkedin),
+      portfolio: stringField(personalRaw.portfolio),
+    },
+    summary: stringField(raw.summary),
+    experience: sanitizeEntryArray(raw.experience, {
+      company: '', title: '', location: '', start: '', end: '', description: '',
+    }),
+    education: sanitizeEntryArray(raw.education, {
+      degree: '', institution: '', location: '', start: '', end: '', description: '',
+    }),
+    skills: sanitizeStringArray(raw.skills),
+    projects: sanitizeEntryArray(raw.projects, { name: '', tech: '', url: '', description: '' }),
+    certifications: sanitizeEntryArray(raw.certifications, { name: '', org: '', year: '', url: '' }),
+    languages: sanitizeEntryArray(raw.languages, { lang: '', level: '' }),
+  };
+}
+
 export function loadResumeData(): ResumeData {
   try {
     const saved = window.localStorage.getItem(RESUME_STORAGE_KEY);
