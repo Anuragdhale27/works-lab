@@ -1397,84 +1397,143 @@ footer {
 
 /* ---- RESUME TEMPLATES OUTPUT ---- */
 
+/* Shared resume design tokens. Namespaced with an `--r-` prefix so they
+   can never collide with (or leak into) the app-chrome tokens above.
+   Consumed today by Modern and Classic; Minimal and Executive are left
+   on their pre-existing hardcoded sizes for a later pass, but can adopt
+   these same variables without redefining them since they're scoped to
+   every `.resume-*` template root, not the two consumers alone. */
+.resume-modern,
+.resume-classic,
+.resume-minimal,
+.resume-executive {
+  --r-text: 13px;       /* 9.75pt  — body */
+  --r-text-sm: 12px;    /* 9pt     — dates, company, location, meta */
+  --r-title: 14px;      /* 10.5pt  — job titles, degrees */
+  --r-name: 26px;       /* 19.5pt  — candidate name */
+  --r-section: 11px;    /* 8.25pt  — section headings, uppercase + 0.1em tracking */
+  --r-lh: 1.45;         /* body line-height */
+  --r-lh-tight: 1.25;   /* heading line-height */
+
+  /* 4px spacing scale */
+  --r-sp-1: 4px;
+  --r-sp-2: 8px;
+  --r-sp-3: 12px;
+  --r-sp-4: 16px;
+  --r-sp-5: 20px;
+  --r-sp-6: 24px;
+  --r-sp-8: 32px;
+  --r-sp-12: 48px;
+
+  --r-margin: 48px;     /* page side margins: 12.7mm / 0.5in minimum */
+  --r-ink: #1a1a1a;     /* primary text, print-safe */
+  --r-ink-soft: #595959; /* secondary text — never lighter than this in print */
+}
+
 /* Modern */
 .resume-modern {
   font-family: 'Inter', sans-serif;
-  font-size: 11px;
-  line-height: 1.5;
-  color: #111;
+  font-size: var(--r-text);
+  line-height: var(--r-lh);
+  color: var(--r-ink);
   background: #fff;
 }
 
 .rmod-header {
   background: #1e3a5f;
   color: #fff;
-  padding: 32px 36px;
+  padding: var(--r-sp-6) var(--r-margin);
 }
 
-.rmod-name { font-size: 24px; font-weight: 800; letter-spacing: -0.02em; margin-bottom: 4px; }
-.rmod-title { font-size: 12px; opacity: 0.7; margin-bottom: 14px; }
+.rmod-name {
+  font-size: var(--r-name);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: var(--r-lh-tight);
+  margin-bottom: var(--r-sp-1);
+}
+.rmod-title { font-size: var(--r-title); font-weight: 500; opacity: 0.85; margin-bottom: var(--r-sp-2); }
 
 .rmod-contact {
   display: flex;
   flex-wrap: wrap;
-  gap: 16px;
-  font-size: 10px;
-  opacity: 0.65;
+  gap: var(--r-sp-4);
+  font-size: var(--r-text-sm);
+  opacity: 0.75;
 }
 
-.rmod-body { padding: 28px 36px; }
-.rmod-section { margin-bottom: 22px; }
+.rmod-body { padding: var(--r-sp-6) var(--r-margin); }
+.rmod-section { margin-bottom: var(--r-sp-5); }
+.rmod-section:last-child { margin-bottom: 0; }
 
 .rmod-section-title {
-  font-size: 9px;
+  font-size: var(--r-section);
   font-weight: 800;
   text-transform: uppercase;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.1em;
   color: #2563eb;
   border-bottom: 1.5px solid #2563eb;
-  padding-bottom: 5px;
-  margin-bottom: 12px;
+  padding-bottom: var(--r-sp-1);
+  margin-bottom: var(--r-sp-3);
 }
 
-.rmod-exp-item { margin-bottom: 14px; }
-.rmod-exp-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 2px; }
-.rmod-exp-title { font-weight: 700; font-size: 11px; }
-.rmod-exp-date { font-size: 9px; color: #666; white-space: nowrap; }
-.rmod-exp-company { font-size: 10px; color: #555; margin-bottom: 5px; }
-.rmod-exp-desc { font-size: 10px; color: #444; line-height: 1.6; }
+.rmod-exp-item { margin-bottom: var(--r-sp-4); }
+.rmod-exp-item:last-child { margin-bottom: 0; }
+.rmod-exp-header { display: flex; justify-content: space-between; align-items: baseline; gap: var(--r-sp-2); margin-bottom: 2px; }
+.rmod-exp-title { font-weight: 700; font-size: var(--r-title); line-height: var(--r-lh-tight); }
+.rmod-exp-date { font-size: var(--r-text-sm); color: var(--r-ink-soft); white-space: nowrap; }
+.rmod-exp-company { font-size: var(--r-text-sm); color: var(--r-ink-soft); font-weight: 600; margin-bottom: var(--r-sp-1); }
+.rmod-exp-desc { font-size: var(--r-text); color: var(--r-ink); line-height: var(--r-lh); }
 
-.rmod-skills { display: flex; flex-wrap: wrap; gap: 6px; }
-.rmod-skill { background: #eff6ff; color: #2563eb; border-radius: 3px; padding: 3px 9px; font-size: 9px; font-weight: 600; }
+.rmod-skills { display: flex; flex-wrap: wrap; gap: var(--r-sp-2); }
+.rmod-skill { background: #eff6ff; color: #2563eb; border-radius: 3px; padding: 4px 10px; font-size: var(--r-text-sm); font-weight: 600; }
 
-.rmod-edu-item { margin-bottom: 10px; }
-.rmod-edu-degree { font-weight: 700; font-size: 11px; }
-.rmod-edu-school { font-size: 10px; color: #555; }
-.rmod-edu-year { font-size: 9px; color: #888; }
+.rmod-edu-item { margin-bottom: var(--r-sp-3); }
+.rmod-edu-item:last-child { margin-bottom: 0; }
+.rmod-edu-degree { font-weight: 700; font-size: var(--r-title); line-height: var(--r-lh-tight); }
+.rmod-edu-school { font-size: var(--r-text-sm); color: var(--r-ink-soft); font-weight: 600; }
+.rmod-edu-year { font-size: var(--r-text-sm); color: var(--r-ink-soft); }
 
 /* Classic */
 .resume-classic {
   font-family: 'Georgia', serif;
-  font-size: 11px;
-  line-height: 1.6;
-  color: #111;
+  font-size: var(--r-text);
+  line-height: var(--r-lh);
+  color: var(--r-ink);
   background: #fff;
-  padding: 40px 48px;
+  padding: var(--r-sp-8) var(--r-margin);
 }
 
-.rcls-name { font-size: 26px; font-weight: 700; text-align: center; letter-spacing: 0.02em; margin-bottom: 4px; }
-.rcls-title { font-size: 12px; text-align: center; color: #555; margin-bottom: 8px; }
-.rcls-contact { text-align: center; font-size: 9.5px; color: #666; margin-bottom: 6px; }
-.rcls-divider { border: none; border-top: 2px solid #111; margin: 10px 0; }
+.rcls-name {
+  font-family: var(--serif);
+  font-size: var(--r-name);
+  font-weight: 900;
+  text-align: center;
+  letter-spacing: 0.01em;
+  line-height: var(--r-lh-tight);
+  margin-bottom: var(--r-sp-1);
+}
+.rcls-title { font-size: var(--r-title); text-align: center; color: var(--r-ink-soft); margin-bottom: var(--r-sp-2); }
+.rcls-contact { text-align: center; font-size: var(--r-text-sm); color: var(--r-ink-soft); margin-bottom: var(--r-sp-2); }
+.rcls-divider { border: none; border-top: 2px solid #111; margin: var(--r-sp-3) 0; }
 .rcls-thin { border-color: #ccc; border-width: 0.5px; }
-.rcls-section-title { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; margin: 14px 0 6px; border-bottom: 1px solid #111; padding-bottom: 3px; }
-.rcls-exp-item { margin-bottom: 12px; }
-.rcls-exp-header { display: flex; justify-content: space-between; }
-.rcls-exp-title { font-weight: 700; font-size: 11px; }
-.rcls-exp-date { font-size: 9.5px; color: #555; }
-.rcls-exp-sub { font-size: 10px; color: #555; font-style: italic; margin-bottom: 4px; }
-.rcls-desc { font-size: 10px; color: #333; line-height: 1.6; }
-.rcls-skills-list { font-size: 10px; color: #333; }
+.rcls-section-title {
+  font-size: var(--r-section);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin: var(--r-sp-4) 0 var(--r-sp-2);
+  border-bottom: 1px solid #111;
+  padding-bottom: var(--r-sp-1);
+}
+.rcls-exp-item { margin-bottom: var(--r-sp-4); }
+.rcls-exp-item:last-child { margin-bottom: 0; }
+.rcls-exp-header { display: flex; justify-content: space-between; align-items: baseline; gap: var(--r-sp-2); }
+.rcls-exp-title { font-weight: 700; font-size: var(--r-title); line-height: var(--r-lh-tight); }
+.rcls-exp-date { font-size: var(--r-text-sm); color: var(--r-ink-soft); white-space: nowrap; }
+.rcls-exp-sub { font-size: var(--r-text-sm); color: var(--r-ink-soft); font-style: italic; margin-bottom: var(--r-sp-1); }
+.rcls-desc { font-size: var(--r-text); color: var(--r-ink); line-height: var(--r-lh); }
+.rcls-skills-list { font-size: var(--r-text); color: var(--r-ink); }
 
 /* Minimal */
 .resume-minimal {

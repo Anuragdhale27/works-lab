@@ -20,7 +20,7 @@ export function ModernTemplate({ data }: { data: ResumeData }) {
         {data.summary && (
           <div className="rmod-section">
             <div className="rmod-section-title">Professional Summary</div>
-            <div style={{ fontSize: '10px', color: '#333', lineHeight: 1.7 }}>{multiline(data.summary)}</div>
+            <div className="rmod-exp-desc">{multiline(data.summary)}</div>
           </div>
         )}
 
