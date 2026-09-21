@@ -1435,3 +1435,15 @@ select:focus-visible,
 }
 
 main:focus { outline: none; }
+
+/* Print: only the resume preview (builder UI is hidden), full-width A4 */
+@page { size: A4; margin: 0; }
+@media print {
+  nav, .skip-link, .toast, .mobile-nav, .builder-form-panel, .preview-header { display: none !important; }
+  html, body { background: #fff !important; margin: 0; padding: 0; }
+  .builder-layout { display: block; min-height: 0; }
+  .builder-preview-panel { position: static; height: auto; overflow: visible; padding: 0; background: none; }
+  .preview-wrapper { box-shadow: none; border: 0; border-radius: 0; overflow: visible !important; margin: 0; }
+  .preview-wrapper > div { transform: none !important; min-height: 0 !important; width: 100%; }
+  .resume-minimal { min-height: 297mm; }
+}
