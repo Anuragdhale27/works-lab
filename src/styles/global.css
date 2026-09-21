@@ -1112,7 +1112,11 @@ footer {
 .resume-modern, .resume-classic, .resume-minimal, .resume-executive {
   -webkit-print-color-adjust: exact;
   print-color-adjust: exact;
+  overflow-wrap: anywhere;
 }
+.rmod-exp-header > *, .rcls-exp-header > * { min-width: 0; }
+.rmod-exp-date, .rcls-exp-date { flex-shrink: 0; max-width: 45%; white-space: normal; }
+.rmin-main, .rexe-header > div:first-child { min-width: 0; }
 .resume-modern img, .resume-minimal img, .resume-executive img { break-inside: avoid; }
 .rmod-exp-item, .rcls-exp-item, .rexe-desc { break-inside: avoid; }
 
@@ -1210,7 +1214,7 @@ footer {
   color: #111;
   background: #fff;
   display: grid;
-  grid-template-columns: 170px 1fr;
+  grid-template-columns: 170px minmax(0, 1fr);
   min-height: 100%;
 }
 

@@ -9,7 +9,7 @@ import type {
   ProjectEntry,
   ResumeData,
 } from '../types/resume';
-import { emptyResumeData, type TemplateKey } from '../types/resume';
+import type { TemplateKey } from '../types/resume';
 import { TEMPLATES, isTemplateKey } from '../templates';
 import { loadResumeData, saveResumeData } from '../lib/storage';
 import { SkipLink } from '../components/SkipLink';
@@ -21,7 +21,8 @@ export function Builder() {
   const [searchParams] = useSearchParams();
   const { showToast } = useToast();
 
-  const [data, setData] = useState<ResumeData>(emptyResumeData);
+  // Lazy init so the first save can never overwrite stored data with the empty default (StrictMode re-runs effects).
+  const [data, setData] = useState<ResumeData>(loadResumeData);
   const [template, setTemplate] = useState<TemplateKey>(() => {
     const t = searchParams.get('template');
     return isTemplateKey(t ?? undefined) ? (t as TemplateKey) : 'modern';
@@ -29,11 +30,6 @@ export function Builder() {
   const [downloading, setDownloading] = useState(false);
 
   const previewRef = useRef<HTMLDivElement>(null);
-
-  // Load persisted data on mount only.
-  useEffect(() => {
-    setData(loadResumeData());
-  }, []);
 
   // Persist on every change.
   useEffect(() => {
@@ -129,7 +125,7 @@ export function Builder() {
       const html2pdf = (await import('html2pdf.js')).default;
       const opt = {
         margin: 0,
-        filename: `${(data.personal.name || 'resume').replace(/\s+/g, '_')}_resume.pdf`,
+        filename: `${(data.personal.name.replace(/[^\p{L}\p{N}]+/gu, '_').replace(/^_+|_+$/g, '').slice(0, 60) || 'resume')}_resume.pdf`,
         image: { type: 'jpeg', quality: 0.98 },
         html2canvas: { scale: 2, useCORS: true, letterRendering: true },
         jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
