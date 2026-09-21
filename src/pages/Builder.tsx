@@ -123,6 +123,13 @@ export function Builder() {
     setDownloading(true);
     try {
       const html2pdf = (await import('html2pdf.js')).default;
+      // Capture at real A4 width, with height rounded up to whole pages (minus 1px so rounding
+      // never adds a blank page), so Executive/Minimal backgrounds fill every page.
+      const prev = { width: el.style.width, minHeight: el.style.minHeight };
+      el.style.width = '210mm';
+      el.style.minHeight = '0';
+      const pagePx = (el.offsetWidth * 297) / 210;
+      el.style.minHeight = `${Math.max(1, Math.ceil((el.scrollHeight - 1) / pagePx)) * pagePx - 1}px`;
       const opt = {
         margin: 0,
         filename: `${(data.personal.name.replace(/[^\p{L}\p{N}]+/gu, '_').replace(/^_+|_+$/g, '').slice(0, 60) || 'resume')}_resume.pdf`,
@@ -130,7 +137,12 @@ export function Builder() {
         html2canvas: { scale: 2, useCORS: true, letterRendering: true },
         jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
       };
-      await html2pdf().set(opt).from(el).save();
+      try {
+        await html2pdf().set(opt).from(el).save();
+      } finally {
+        el.style.width = prev.width;
+        el.style.minHeight = prev.minHeight;
+      }
       showToast('Resume downloaded!');
     } catch {
       showToast('Download failed. Please try again.');
@@ -151,11 +163,11 @@ export function Builder() {
               <Link to="/" className="nav-logo">
                 Works<span>Lab</span>
               </Link>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                <span style={{ fontSize: '0.82rem', color: 'var(--gray-400)' }}>
+              <div className="builder-nav-actions" style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                <span className="builder-nav-meta" style={{ fontSize: '0.82rem', color: 'var(--gray-400)' }}>
                   Template: <strong style={{ color: 'var(--black)' }}>{TEMPLATES[template].name}</strong>
                 </span>
-                <span style={{ fontSize: '0.75rem', color: 'var(--green)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <span className="builder-nav-meta" style={{ fontSize: '0.75rem', color: 'var(--green)', display: 'flex', alignItems: 'center', gap: '4px' }}>
                   <span aria-hidden="true">●</span> Auto-saved
                 </span>
                 <button
@@ -187,7 +199,7 @@ export function Builder() {
                 <div className="form-section-title">Personal Information</div>
                 <div className="form-group">
                   <label className="form-label" htmlFor="photo">Photo (optional)</label>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
                     {data.personal.photo && (
                       <img src={data.personal.photo} alt="Your photo" style={{ width: 48, height: 48, borderRadius: '50%', objectFit: 'cover' }} />
                     )}

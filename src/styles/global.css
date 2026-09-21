@@ -1118,7 +1118,15 @@ footer {
 .rmod-exp-date, .rcls-exp-date { flex-shrink: 0; max-width: 45%; white-space: normal; }
 .rmin-main, .rexe-header > div:first-child { min-width: 0; }
 .resume-modern img, .resume-minimal img, .resume-executive img { break-inside: avoid; }
-.rmod-exp-item, .rcls-exp-item, .rexe-desc { break-inside: avoid; }
+/* Modern/Classic entries stay whole; Executive/Minimal descriptions may split (2+ lines each side) */
+.rmod-exp-item, .rcls-exp-item { break-inside: avoid; }
+.rexe-desc, .rmin-desc { orphans: 2; widows: 2; }
+/* Never strand an entry or section header at the bottom of a page */
+.rmod-section-title, .rmod-exp-header, .rmod-exp-company, .rmod-edu-degree, .rmod-edu-school,
+.rcls-section-title, .rcls-exp-header, .rcls-exp-sub,
+.rmin-section-title, .rmin-exp-title, .rmin-exp-sub,
+.rexe-section-title, .rexe-divider, .rexe-exp-title, .rexe-exp-sub,
+.rexe-exp-title:only-child, div:has(> .rexe-exp-title) { break-after: avoid; }
 
 /* Modern: navy header, blue accent rail on section titles */
 .resume-modern {
@@ -1281,12 +1289,18 @@ footer {
   .template-detail-inner { grid-template-columns: 1fr; }
   .template-detail-preview { position: static; }
 
-  .builder-layout { grid-template-columns: 1fr; }
+  .builder-layout { grid-template-columns: minmax(0, 1fr); }
   .builder-form-panel { height: auto; position: static; overflow: visible; }
   .builder-preview-panel { height: auto; position: static; padding: 20px; }
 }
 
 @media (max-width: 600px) {
+  .builder-nav-actions { gap: 8px !important; }
+  .builder-nav-meta { display: none !important; }
+  .builder-nav-actions .btn { padding: 8px 14px !important; font-size: 0.8rem !important; white-space: nowrap; }
+  .builder-form-header, .builder-sections { padding-left: 16px; padding-right: 16px; }
+  .builder-preview-panel { padding: 12px; }
+  .preview-header { flex-wrap: wrap; gap: 8px; }
   .templates-grid { grid-template-columns: 1fr; }
   .features-grid { grid-template-columns: 1fr; }
   .form-row { grid-template-columns: 1fr; }
