@@ -1445,5 +1445,11 @@ main:focus { outline: none; }
   .builder-preview-panel { position: static; height: auto; overflow: visible; padding: 0; background: none; }
   .preview-wrapper { box-shadow: none; border: 0; border-radius: 0; overflow: visible !important; margin: 0; }
   .preview-wrapper > div { transform: none !important; min-height: 0 !important; width: 100%; }
-  .resume-minimal { min-height: 297mm; }
+  /* 296mm (not 297) so sub-pixel rounding never spills a blank 2nd page */
+  .resume-executive, .resume-minimal { min-height: 296mm; }
+  /* The page canvas carries the background so it continues on every page and below short content */
+  html:has(.resume-executive), body:has(.resume-executive) { background: #0d0d0d !important; }
+  html:has(.resume-minimal), body:has(.resume-minimal) {
+    background: linear-gradient(to right, #eef6f5 167px, #0f766e 167px 170px, #fff 170px) !important;
+  }
 }
