@@ -125,11 +125,17 @@ export function Builder() {
       const html2pdf = (await import('html2pdf.js')).default;
       // Capture at real A4 width, with height rounded up to whole pages (minus 1px so rounding
       // never adds a blank page), so Executive/Minimal backgrounds fill every page.
-      const prev = { width: el.style.width, minHeight: el.style.minHeight };
+      const root = el.firstElementChild as HTMLElement | null; // the template root carries its own background
+      const prev = { width: el.style.width, minHeight: el.style.minHeight, background: el.style.background, rootMin: root?.style.minHeight ?? '' };
       el.style.width = '210mm';
       el.style.minHeight = '0';
       const pagePx = (el.offsetWidth * 297) / 210;
-      el.style.minHeight = `${Math.max(1, Math.ceil((el.scrollHeight - 1) / pagePx)) * pagePx - 1}px`;
+      const fullHeight = `${Math.max(1, Math.ceil((el.scrollHeight - 1) / pagePx)) * pagePx - 1}px`;
+      el.style.minHeight = fullHeight;
+      if (root) root.style.minHeight = fullHeight;
+      // The wrapper carries the page background so it continues below the template root.
+      if (template === 'executive') el.style.background = '#0d0d0d';
+      if (template === 'minimal') el.style.background = 'linear-gradient(to right, #eef6f5 167px, #0f766e 167px 170px, #fff 170px)';
       const opt = {
         margin: 0,
         filename: `${(data.personal.name.replace(/[^\p{L}\p{N}]+/gu, '_').replace(/^_+|_+$/g, '').slice(0, 60) || 'resume')}_resume.pdf`,
@@ -142,6 +148,8 @@ export function Builder() {
       } finally {
         el.style.width = prev.width;
         el.style.minHeight = prev.minHeight;
+        el.style.background = prev.background;
+        if (root) root.style.minHeight = prev.rootMin;
       }
       showToast('Resume downloaded!');
     } catch {
