@@ -1,4 +1,4 @@
-import { HashRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { ToastProvider } from './components/ToastProvider';
 import { Landing } from './pages/Landing';
 import { Builder } from './pages/Builder';
@@ -9,7 +9,7 @@ import { Refund } from './pages/Refund';
 
 function App() {
   return (
-    <HashRouter>
+    <BrowserRouter>
       <ToastProvider>
         <Routes>
           <Route path="/" element={<Landing />} />
@@ -20,7 +20,7 @@ function App() {
           <Route path="/refund" element={<Refund />} />
         </Routes>
       </ToastProvider>
-    </HashRouter>
+    </BrowserRouter>
   );
 }
 
