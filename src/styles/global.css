@@ -937,6 +937,156 @@ footer {
   margin-top: 3px;
 }
 
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Progress / completeness indicator */
+.progress-block { margin-top: 14px; }
+
+.progress-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.progress-bar-track {
+  flex: 1;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--gray-200);
+  overflow: hidden;
+}
+
+.progress-bar-fill {
+  height: 100%;
+  background: var(--green);
+  border-radius: 999px;
+  transition: width var(--transition);
+}
+
+.progress-count {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--gray-600);
+  white-space: nowrap;
+}
+
+.progress-next {
+  font-size: 0.78rem;
+  color: var(--gray-400);
+  margin-top: 6px;
+}
+
+.form-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-top: 12px;
+  flex-wrap: wrap;
+}
+
+.btn-text-danger {
+  background: none;
+  border: none;
+  /* gray-400 on white is ~2.8:1 and reads as a disabled control */
+  color: var(--gray-600);
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+  transition: color var(--transition);
+}
+
+.btn-text-danger:hover { color: #ef4444; }
+
+/* Section navigator */
+.section-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 14px;
+}
+
+.section-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid var(--gray-200);
+  background: var(--white);
+  border-radius: 999px;
+  padding: 5px 10px 5px 8px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--gray-600);
+  cursor: pointer;
+  transition: all var(--transition);
+  white-space: nowrap;
+}
+
+.section-nav-item:hover { border-color: var(--accent); color: var(--accent); }
+
+.section-nav-item.active {
+  border-color: var(--accent);
+  background: var(--accent-light);
+  color: var(--accent);
+}
+
+.section-nav-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background: var(--gray-200);
+}
+
+.section-nav-dot.status-partial { background: #f59e0b; }
+.section-nav-dot.status-complete { background: var(--green); }
+
+.section-nav-optional {
+  font-size: 0.65rem;
+  font-weight: 500;
+  color: var(--gray-400);
+}
+
+@media (max-width: 900px) {
+  .section-nav {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding-bottom: 2px;
+    -webkit-overflow-scrolling: touch;
+  }
+  .section-nav-item { flex-shrink: 0; }
+}
+
+/* Field hints and inline validation */
+.field-hint {
+  font-size: 0.75rem;
+  color: var(--gray-400);
+  margin-bottom: 8px;
+  line-height: 1.4;
+}
+
+.field-error {
+  font-size: 0.75rem;
+  color: #ef4444;
+  margin-top: 5px;
+  font-weight: 500;
+}
+
+.form-input[aria-invalid='true'],
+.form-textarea[aria-invalid='true'] {
+  border-color: #ef4444;
+}
+
 .builder-sections { padding: 0 28px 80px; }
 
 .form-section {
@@ -1099,143 +1249,360 @@ footer {
 }
 
 .preview-wrapper {
+  overflow: auto;
+  padding: 8px;
+}
+
+.preview-wrapper.is-zoomed {
+  overflow: auto;
+}
+
+/* Fixed-size A4 page surface. Width/height are set inline (210mm / 297mm-multiples)
+   so the scale factor computed in JS lines up exactly. */
+.a4-page {
   background: var(--white);
   box-shadow: var(--shadow-lg);
-  border-radius: 8px;
-  overflow: hidden;
+  border-radius: 4px;
   border: 1px solid var(--gray-200);
+  transform-origin: top left;
+  position: relative;
+}
+
+.page-break-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+}
+
+.page-break-line {
+  position: absolute;
+  left: 0;
+  right: 0;
+  border-top: 2px dashed var(--accent);
+  display: flex;
+  justify-content: flex-end;
+}
+
+.page-break-label {
+  transform: translateY(-100%);
+  background: var(--accent);
+  color: var(--white);
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 0 0 0 4px;
+  letter-spacing: 0.02em;
+}
+
+.page-count-notice {
+  font-size: 0.78rem;
+  color: var(--gray-600);
+  background: var(--accent-light);
+  border: 1px solid var(--accent);
+  border-radius: var(--radius-sm);
+  padding: 6px 12px;
+  margin-bottom: 12px;
+}
+
+/* One-line heads-up so the browser's print dialog isn't a surprise. */
+.print-hint {
+  font-size: 0.78rem;
+  color: var(--gray-400);
+  margin-bottom: 12px;
+}
+
+.zoom-controls {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--white);
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius-sm);
+  padding: 3px;
+}
+
+.zoom-controls button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--gray-600);
+  padding: 6px 10px;
+  border-radius: 4px;
+  transition: background var(--transition), color var(--transition);
+}
+
+.zoom-controls button:hover { background: var(--gray-100); }
+
+.zoom-controls button.active {
+  background: var(--black);
+  color: var(--white);
+}
+
+.save-indicator {
+  font-size: 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+}
+
+.save-indicator.state-saving { color: var(--gray-400); }
+.save-indicator.state-saved { color: var(--green); }
+.save-indicator.state-error { color: #ef4444; }
+
+/* Two text variants for the save indicator: the full sentence on desktop,
+   a single short word on narrow phone widths. Each is display:none when
+   inactive, so assistive tech only ever announces the one in the a11y tree. */
+.save-indicator-short { display: none; }
+
+.builder-nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+/* Mobile Edit/Preview toggle — hidden above the 900px breakpoint, where
+   both panels are shown side by side as usual. */
+.mobile-view-toggle {
+  display: none;
+}
+
+@media (max-width: 900px) {
+  .mobile-view-toggle {
+    display: flex;
+    gap: 8px;
+    position: sticky;
+    top: 64px;
+    z-index: 20;
+    background: var(--white);
+    border-bottom: 1px solid var(--gray-200);
+    padding: 10px 16px;
+  }
+
+  .mobile-view-toggle button {
+    flex: 1;
+    padding: 10px;
+    border-radius: var(--radius);
+    border: 1px solid var(--gray-200);
+    background: var(--gray-100);
+    color: var(--gray-600);
+    font-weight: 600;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: background var(--transition), color var(--transition);
+  }
+
+  .mobile-view-toggle button[aria-selected="true"] {
+    background: var(--black);
+    color: var(--white);
+    border-color: var(--black);
+  }
 }
 
 /* ---- RESUME TEMPLATES OUTPUT ---- */
 
+/* Shared resume design tokens. Namespaced with an `--r-` prefix so they
+   can never collide with (or leak into) the app-chrome tokens above.
+   Consumed by all four templates — Modern, Classic, Minimal and Executive. */
+.resume-modern,
+.resume-classic,
+.resume-minimal,
+.resume-executive {
+  --r-text: 13px;       /* 9.75pt  — body */
+  --r-text-sm: 12px;    /* 9pt     — dates, company, location, meta */
+  --r-title: 14px;      /* 10.5pt  — job titles, degrees */
+  --r-name: 26px;       /* 19.5pt  — candidate name */
+  --r-section: 11px;    /* 8.25pt  — section headings, uppercase + 0.1em tracking */
+  --r-lh: 1.45;         /* body line-height */
+  --r-lh-tight: 1.25;   /* heading line-height */
+
+  /* 4px spacing scale */
+  --r-sp-1: 4px;
+  --r-sp-2: 8px;
+  --r-sp-3: 12px;
+  --r-sp-4: 16px;
+  --r-sp-5: 20px;
+  --r-sp-6: 24px;
+  --r-sp-8: 32px;
+  --r-sp-12: 48px;
+
+  --r-margin: 48px;     /* page side margins: 12.7mm / 0.5in minimum */
+  --r-ink: #1a1a1a;     /* primary text, print-safe */
+  --r-ink-soft: #595959; /* secondary text — never lighter than this in print */
+}
+
 /* Modern */
 .resume-modern {
   font-family: 'Inter', sans-serif;
-  font-size: 11px;
-  line-height: 1.5;
-  color: #111;
+  font-size: var(--r-text);
+  line-height: var(--r-lh);
+  color: var(--r-ink);
   background: #fff;
 }
 
 .rmod-header {
   background: #1e3a5f;
   color: #fff;
-  padding: 32px 36px;
+  padding: var(--r-sp-6) var(--r-margin);
 }
 
-.rmod-name { font-size: 24px; font-weight: 800; letter-spacing: -0.02em; margin-bottom: 4px; }
-.rmod-title { font-size: 12px; opacity: 0.7; margin-bottom: 14px; }
+.rmod-name {
+  font-size: var(--r-name);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: var(--r-lh-tight);
+  margin-bottom: var(--r-sp-1);
+}
+.rmod-title { font-size: var(--r-title); font-weight: 500; opacity: 0.85; margin-bottom: var(--r-sp-2); }
 
 .rmod-contact {
   display: flex;
   flex-wrap: wrap;
-  gap: 16px;
-  font-size: 10px;
-  opacity: 0.65;
+  gap: var(--r-sp-4);
+  font-size: var(--r-text-sm);
+  opacity: 0.75;
 }
 
-.rmod-body { padding: 28px 36px; }
-.rmod-section { margin-bottom: 22px; }
+.rmod-body { padding: var(--r-sp-6) var(--r-margin); }
+.rmod-section { margin-bottom: var(--r-sp-5); }
+.rmod-section:last-child { margin-bottom: 0; }
 
 .rmod-section-title {
-  font-size: 9px;
+  font-size: var(--r-section);
   font-weight: 800;
   text-transform: uppercase;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.1em;
   color: #2563eb;
   border-bottom: 1.5px solid #2563eb;
-  padding-bottom: 5px;
-  margin-bottom: 12px;
+  padding-bottom: var(--r-sp-1);
+  margin-bottom: var(--r-sp-3);
 }
 
-.rmod-exp-item { margin-bottom: 14px; }
-.rmod-exp-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 2px; }
-.rmod-exp-title { font-weight: 700; font-size: 11px; }
-.rmod-exp-date { font-size: 9px; color: #666; white-space: nowrap; }
-.rmod-exp-company { font-size: 10px; color: #555; margin-bottom: 5px; }
-.rmod-exp-desc { font-size: 10px; color: #444; line-height: 1.6; }
+.rmod-exp-item { margin-bottom: var(--r-sp-4); }
+.rmod-exp-item:last-child { margin-bottom: 0; }
+.rmod-exp-header { display: flex; justify-content: space-between; align-items: baseline; gap: var(--r-sp-2); margin-bottom: 2px; }
+.rmod-exp-title { font-weight: 700; font-size: var(--r-title); line-height: var(--r-lh-tight); }
+.rmod-exp-date { font-size: var(--r-text-sm); color: var(--r-ink-soft); white-space: nowrap; }
+.rmod-exp-company { font-size: var(--r-text-sm); color: var(--r-ink-soft); font-weight: 600; margin-bottom: var(--r-sp-1); }
+.rmod-exp-desc { font-size: var(--r-text); color: var(--r-ink); line-height: var(--r-lh); }
 
-.rmod-skills { display: flex; flex-wrap: wrap; gap: 6px; }
-.rmod-skill { background: #eff6ff; color: #2563eb; border-radius: 3px; padding: 3px 9px; font-size: 9px; font-weight: 600; }
+.rmod-skills { display: flex; flex-wrap: wrap; gap: var(--r-sp-2); }
+.rmod-skill { background: #eff6ff; color: #2563eb; border-radius: 3px; padding: 4px 10px; font-size: var(--r-text-sm); font-weight: 600; }
 
-.rmod-edu-item { margin-bottom: 10px; }
-.rmod-edu-degree { font-weight: 700; font-size: 11px; }
-.rmod-edu-school { font-size: 10px; color: #555; }
-.rmod-edu-year { font-size: 9px; color: #888; }
+.rmod-edu-item { margin-bottom: var(--r-sp-3); }
+.rmod-edu-item:last-child { margin-bottom: 0; }
+.rmod-edu-degree { font-weight: 700; font-size: var(--r-title); line-height: var(--r-lh-tight); }
+.rmod-edu-school { font-size: var(--r-text-sm); color: var(--r-ink-soft); font-weight: 600; }
+.rmod-edu-year { font-size: var(--r-text-sm); color: var(--r-ink-soft); }
 
 /* Classic */
 .resume-classic {
   font-family: 'Georgia', serif;
-  font-size: 11px;
-  line-height: 1.6;
-  color: #111;
+  font-size: var(--r-text);
+  line-height: var(--r-lh);
+  color: var(--r-ink);
   background: #fff;
-  padding: 40px 48px;
+  padding: var(--r-sp-8) var(--r-margin);
 }
 
-.rcls-name { font-size: 26px; font-weight: 700; text-align: center; letter-spacing: 0.02em; margin-bottom: 4px; }
-.rcls-title { font-size: 12px; text-align: center; color: #555; margin-bottom: 8px; }
-.rcls-contact { text-align: center; font-size: 9.5px; color: #666; margin-bottom: 6px; }
-.rcls-divider { border: none; border-top: 2px solid #111; margin: 10px 0; }
+.rcls-name {
+  font-family: var(--serif);
+  font-size: var(--r-name);
+  font-weight: 900;
+  text-align: center;
+  letter-spacing: 0.01em;
+  line-height: var(--r-lh-tight);
+  margin-bottom: var(--r-sp-1);
+}
+.rcls-title { font-size: var(--r-title); text-align: center; color: var(--r-ink-soft); margin-bottom: var(--r-sp-2); }
+.rcls-contact { text-align: center; font-size: var(--r-text-sm); color: var(--r-ink-soft); margin-bottom: var(--r-sp-2); }
+.rcls-divider { border: none; border-top: 2px solid #111; margin: var(--r-sp-3) 0; }
 .rcls-thin { border-color: #ccc; border-width: 0.5px; }
-.rcls-section-title { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; margin: 14px 0 6px; border-bottom: 1px solid #111; padding-bottom: 3px; }
-.rcls-exp-item { margin-bottom: 12px; }
-.rcls-exp-header { display: flex; justify-content: space-between; }
-.rcls-exp-title { font-weight: 700; font-size: 11px; }
-.rcls-exp-date { font-size: 9.5px; color: #555; }
-.rcls-exp-sub { font-size: 10px; color: #555; font-style: italic; margin-bottom: 4px; }
-.rcls-desc { font-size: 10px; color: #333; line-height: 1.6; }
-.rcls-skills-list { font-size: 10px; color: #333; }
+.rcls-section-title {
+  font-size: var(--r-section);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin: var(--r-sp-4) 0 var(--r-sp-2);
+  border-bottom: 1px solid #111;
+  padding-bottom: var(--r-sp-1);
+}
+.rcls-exp-item { margin-bottom: var(--r-sp-4); }
+.rcls-exp-item:last-child { margin-bottom: 0; }
+.rcls-exp-header { display: flex; justify-content: space-between; align-items: baseline; gap: var(--r-sp-2); }
+.rcls-exp-title { font-weight: 700; font-size: var(--r-title); line-height: var(--r-lh-tight); }
+.rcls-exp-date { font-size: var(--r-text-sm); color: var(--r-ink-soft); white-space: nowrap; }
+.rcls-exp-sub { font-size: var(--r-text-sm); color: var(--r-ink-soft); font-style: italic; margin-bottom: var(--r-sp-1); }
+.rcls-desc { font-size: var(--r-text); color: var(--r-ink); line-height: var(--r-lh); }
+.rcls-skills-list { font-size: var(--r-text); color: var(--r-ink); }
 
-/* Minimal */
+/* Minimal — single-column, whitespace-forward, quietest of the four. Typography
+   and restrained rules (not colour blocks) carry the identity. */
 .resume-minimal {
-  font-family: 'Arial', sans-serif;
-  font-size: 11px;
-  line-height: 1.55;
-  color: #111;
+  font-family: 'Inter', sans-serif;
+  font-size: var(--r-text);
+  line-height: var(--r-lh);
+  color: var(--r-ink);
   background: #fff;
-  display: grid;
-  grid-template-columns: 160px 1fr;
-  min-height: 100%;
+  padding: var(--r-sp-8) var(--r-margin) var(--r-sp-6);
 }
 
-.rmin-sidebar { background: #f5f5f5; padding: 32px 20px; }
-.rmin-avatar { width: 64px; height: 64px; border-radius: 50%; background: #333; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 22px; font-weight: 700; margin-bottom: 16px; }
-.rmin-name { font-size: 15px; font-weight: 700; margin-bottom: 4px; line-height: 1.2; }
-.rmin-title { font-size: 9px; color: #666; margin-bottom: 20px; }
-.rmin-label { font-size: 7.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: #333; margin: 14px 0 6px; }
-.rmin-detail { font-size: 9px; color: #555; margin-bottom: 3px; word-break: break-all; }
-.rmin-skill-bar { height: 4px; background: #ddd; border-radius: 2px; margin-bottom: 5px; }
-.rmin-skill-fill { height: 100%; background: #333; border-radius: 2px; }
-.rmin-skill-name { font-size: 8.5px; color: #333; margin-bottom: 2px; }
+.rmin-name { font-size: var(--r-name); font-weight: 600; letter-spacing: -0.01em; line-height: var(--r-lh-tight); margin-bottom: var(--r-sp-1); }
+.rmin-title { font-size: var(--r-title); font-weight: 400; color: var(--r-ink-soft); margin-bottom: var(--r-sp-2); }
+.rmin-contact { font-size: var(--r-text-sm); color: var(--r-ink-soft); margin-bottom: var(--r-sp-4); }
+.rmin-divider { border: none; border-top: 1px solid #ddd; margin: 0 0 var(--r-sp-5); }
 
-.rmin-main { padding: 32px 28px; }
-.rmin-section-title { font-size: 8.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; border-bottom: 2px solid #111; padding-bottom: 3px; margin: 14px 0 8px; }
-.rmin-exp-title { font-weight: 700; font-size: 10.5px; }
-.rmin-exp-sub { font-size: 9px; color: #666; margin-bottom: 4px; }
-.rmin-desc { font-size: 9.5px; color: #444; line-height: 1.55; margin-bottom: 10px; }
+.rmin-section { margin-bottom: var(--r-sp-5); }
+.rmin-section:last-child { margin-bottom: 0; }
+.rmin-section-title {
+  font-size: var(--r-section);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--r-ink-soft);
+  margin-bottom: var(--r-sp-3);
+}
 
-/* Executive */
+.rmin-item { margin-bottom: var(--r-sp-4); }
+.rmin-item:last-child { margin-bottom: 0; }
+.rmin-item-header { display: flex; justify-content: space-between; align-items: baseline; gap: var(--r-sp-2); }
+.rmin-item-title { font-weight: 600; font-size: var(--r-title); line-height: var(--r-lh-tight); color: var(--r-ink); }
+.rmin-item-date { font-size: var(--r-text-sm); color: var(--r-ink-soft); white-space: nowrap; }
+.rmin-item-sub { font-size: var(--r-text-sm); color: var(--r-ink-soft); margin-bottom: var(--r-sp-1); }
+.rmin-desc { font-size: var(--r-text); color: var(--r-ink); line-height: var(--r-lh); }
+
+/* Executive — light, premium, restrained. Seniority comes from typographic
+   confidence (Playfair Display name, generous whitespace) and a single
+   charcoal/navy accent, not a dark slab or gilded gimmicks. */
 .resume-executive {
-  font-family: 'Arial', sans-serif;
-  font-size: 11px;
-  line-height: 1.55;
-  color: #eee;
-  background: #0d0d0d;
+  font-family: 'Inter', sans-serif;
+  font-size: var(--r-text);
+  line-height: var(--r-lh);
+  color: var(--r-ink);
+  background: #fff;
 }
 
-.rexe-header { padding: 36px 40px 24px; border-bottom: 1px solid rgba(255,255,255,0.08); }
-.rexe-name { font-size: 26px; font-weight: 700; letter-spacing: 0.04em; margin-bottom: 4px; color: #fff; }
-.rexe-title { font-size: 11px; color: #d4af37; letter-spacing: 0.06em; margin-bottom: 16px; }
-.rexe-contact { display: flex; flex-wrap: wrap; gap: 16px; font-size: 9.5px; color: rgba(255,255,255,0.45); }
-.rexe-body { padding: 24px 40px; }
-.rexe-section-title { font-size: 8.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.14em; color: #d4af37; margin: 16px 0 8px; }
-.rexe-divider { border: none; border-top: 1px solid rgba(255,255,255,0.08); margin: 4px 0 12px; }
-.rexe-exp-title { font-weight: 700; font-size: 11px; color: #fff; }
-.rexe-exp-sub { font-size: 9.5px; color: rgba(255,255,255,0.5); margin-bottom: 4px; }
-.rexe-desc { font-size: 10px; color: rgba(255,255,255,0.65); line-height: 1.6; margin-bottom: 10px; }
-.rexe-skills { display: flex; flex-wrap: wrap; gap: 6px; }
-.rexe-skill { border: 1px solid rgba(212,175,55,0.35); color: #d4af37; border-radius: 2px; padding: 3px 9px; font-size: 8.5px; font-weight: 600; }
+.rexe-header { padding: var(--r-sp-8) var(--r-margin) var(--r-sp-5); border-bottom: 2px solid #1c2b3a; }
+.rexe-name { font-family: 'Playfair Display', serif; font-size: var(--r-name); font-weight: 700; letter-spacing: 0.01em; line-height: var(--r-lh-tight); margin-bottom: var(--r-sp-1); color: var(--r-ink); }
+.rexe-title { font-size: var(--r-title); font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase; color: #1c2b3a; margin-bottom: var(--r-sp-3); }
+.rexe-contact { display: flex; flex-wrap: wrap; gap: var(--r-sp-4); font-size: var(--r-text-sm); color: var(--r-ink-soft); }
+.rexe-body { padding: var(--r-sp-6) var(--r-margin); }
+.rexe-section { margin-bottom: var(--r-sp-5); }
+.rexe-section:last-child { margin-bottom: 0; }
+.rexe-section-title { font-size: var(--r-section); font-weight: 700; text-transform: uppercase; letter-spacing: 0.16em; color: #1c2b3a; margin-bottom: var(--r-sp-1); }
+.rexe-divider { border: none; border-top: 1px solid #ddd; margin: 0 0 var(--r-sp-3); }
+.rexe-item { margin-bottom: var(--r-sp-4); }
+.rexe-item:last-child { margin-bottom: 0; }
+.rexe-item-header { display: flex; justify-content: space-between; align-items: baseline; gap: var(--r-sp-2); }
+.rexe-item-date { font-size: var(--r-text-sm); color: var(--r-ink-soft); white-space: nowrap; }
+.rexe-exp-title { font-weight: 700; font-size: var(--r-title); line-height: var(--r-lh-tight); color: var(--r-ink); }
+.rexe-exp-sub { font-size: var(--r-text-sm); color: var(--r-ink-soft); margin-bottom: var(--r-sp-1); }
+.rexe-desc { font-size: var(--r-text); color: var(--r-ink); line-height: var(--r-lh); }
+.rexe-skills { display: flex; flex-wrap: wrap; gap: var(--r-sp-2); }
+.rexe-skill { border: 1px solid #c7ccd1; color: var(--r-ink); border-radius: 2px; padding: 3px 10px; font-size: var(--r-text-sm); font-weight: 500; }
 
 /* ---- RESPONSIVE ---- */
 @media (max-width: 900px) {
@@ -1261,16 +1628,47 @@ footer {
   .template-detail-preview { position: static; }
 
   .builder-layout { grid-template-columns: 1fr; }
-  .builder-form-panel { height: auto; position: static; overflow: visible; }
+  /* Grid items default to min-width:auto, so the panel refuses to shrink below
+     the intrinsic width of .section-nav's nowrap pill strip (~1032px) and drags
+     the whole page into horizontal overflow. min-width:0 lets it shrink so the
+     nav's own overflow-x:auto actually scrolls. */
+  .builder-form-panel { height: auto; position: static; overflow: visible; min-width: 0; }
   .builder-preview-panel { height: auto; position: static; padding: 20px; }
+
+  .builder-layout[data-mobile-view="edit"] .builder-preview-panel { display: none; }
+  .builder-layout[data-mobile-view="preview"] .builder-form-panel { display: none; }
+
+  /* Builder top nav: drop the redundant template label (the template
+     <select> is already in the preview panel header) and hide the
+     preview panel's own Download PDF button so only the nav's survives —
+     the nav sits outside the Edit/Preview toggle, so it stays reachable
+     in both states. */
+  .builder-nav-template { display: none; }
+  .preview-header-download { display: none; }
+}
+
+@media (max-width: 480px) {
+  .nav-inner {
+    height: auto;
+    min-height: 56px;
+    padding: 10px 0;
+  }
+
+  .builder-nav-actions { gap: 8px; }
+
+  .save-indicator-full { display: none; }
+  .save-indicator-short { display: inline; }
+
+  .builder-nav-download {
+    padding: 8px 12px !important;
+    font-size: 0.8rem !important;
+  }
 }
 
 @media (max-width: 600px) {
   .templates-grid { grid-template-columns: 1fr; }
   .features-grid { grid-template-columns: 1fr; }
   .form-row { grid-template-columns: 1fr; }
-  .resume-minimal { grid-template-columns: 1fr; }
-  .rmin-sidebar { border-right: none; border-bottom: 2px solid #e8e8e8; }
 }
 
 /* Mobile nav */
@@ -1414,3 +1812,62 @@ select:focus-visible,
 }
 
 main:focus { outline: none; }
+
+/* ======= PRINT EXPORT ======= */
+/* Builder.tsx's downloadPDF() calls window.print(). The resume is printed
+   from a *separate* copy portalled into #print-root (a body-level sibling
+   of #root, see index.html) rather than the on-screen .a4-page node.
+
+   Why: Chromium's print/PDF pipeline emits a blank page for content left
+   inside the on-screen layout — an ancestor that was ever laid out as a
+   CSS Grid (.builder-layout) or as an overflow:auto scroll container
+   (.preview-wrapper) fails to repaint for print even after @media print
+   resets its display/overflow back to normal. The whole app (#root, all
+   nav/form/preview chrome, the zoom-scaled on-screen A4 page, the
+   page-break indicators, toasts) is simply hidden and #print-root shown
+   in its place — no per-element hiding needed. */
+@media print {
+  @page {
+    size: A4;
+    margin: 0;
+  }
+
+  html,
+  body {
+    margin: 0 !important;
+    padding: 0 !important;
+    background: var(--white) !important;
+  }
+
+  #root {
+    display: none !important;
+  }
+
+  #print-root {
+    display: block !important;
+  }
+
+  .print-resume-page {
+    width: 210mm;
+    background: var(--white);
+  }
+
+  * {
+    print-color-adjust: exact !important;
+    -webkit-print-color-adjust: exact !important;
+  }
+
+  /* Don't split a single experience/education/project entry across a page
+     boundary mid-block. */
+  .rmod-exp-item,
+  .rmod-edu-item,
+  .rcls-exp-item,
+  .rexe-item,
+  .rmin-item {
+    break-inside: avoid;
+  }
+}
+
+#print-root {
+  display: none;
+}

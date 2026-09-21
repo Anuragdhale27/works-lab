@@ -42,16 +42,16 @@ export const TEMPLATES: Record<TemplateKey, TemplateMeta> = {
     best: 'Freshers / Students',
     color: '#333333',
     description:
-      'A two-column sidebar layout — perfect for freshers to emphasise skills and education without looking sparse. Clean and modern.',
+      'A single-column, whitespace-forward layout built to parse cleanly in any ATS. Quiet and confident — ideal for freshers who want a clean resume without needing much content to fill it.',
     Component: MinimalTemplate,
   },
   executive: {
     key: 'executive',
     name: 'Executive ATS',
     best: 'Experienced Professionals',
-    color: '#0d0d0d',
+    color: '#1c2b3a',
     description:
-      'A premium dark-theme resume designed for senior leaders. Command attention with a distinctive format that stands apart from the crowd.',
+      'A light, premium resume designed for senior leaders. Typographic confidence and restrained detailing — a Playfair Display name, a single charcoal-navy accent — convey seniority without gimmicks.',
     Component: ExecutiveTemplate,
   },
 };

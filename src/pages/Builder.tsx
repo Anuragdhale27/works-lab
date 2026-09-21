@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useSearchParams } from 'react-router-dom';
 import { Link } from 'react-router-dom';
 import type {
@@ -11,11 +12,21 @@ import type {
 } from '../types/resume';
 import { emptyResumeData, type TemplateKey } from '../types/resume';
 import { TEMPLATES, isTemplateKey } from '../templates';
-import { loadResumeData, saveResumeData } from '../lib/storage';
+import { loadResumeData, saveResumeData, validateResumeData } from '../lib/storage';
 import { SkipLink } from '../components/SkipLink';
 import { useToast } from '../components/ToastProvider';
+import { SectionNav } from '../components/SectionNav';
+import { sampleResumeData } from '../lib/sampleData';
+import { computeOverallProgress, isResumeDataEmpty } from '../lib/completeness';
 
 const LEVELS = ['Native', 'Fluent', 'Professional', 'Conversational', 'Basic'];
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+// A4 at 96dpi — matches the @page A4 size the print export uses.
+const A4_WIDTH_PX = 794;
+const A4_HEIGHT_PX = 1123;
+const ZOOM_STEPS = [0.5, 0.75, 1] as const;
+type ZoomMode = 'fit' | (typeof ZOOM_STEPS)[number];
 
 export function Builder() {
   const [searchParams] = useSearchParams();
@@ -26,19 +37,113 @@ export function Builder() {
     const t = searchParams.get('template');
     return isTemplateKey(t ?? undefined) ? (t as TemplateKey) : 'modern';
   });
-  const [downloading, setDownloading] = useState(false);
-
   const previewRef = useRef<HTMLDivElement>(null);
+  const wrapperRef = useRef<HTMLDivElement>(null);
+  const formPanelRef = useRef<HTMLDivElement>(null);
+  const importInputRef = useRef<HTMLInputElement>(null);
+
+  // Mobile-only Edit/Preview toggle. Ignored above the 900px breakpoint,
+  // where both panels are always shown side by side.
+  const [mobileView, setMobileView] = useState<'edit' | 'preview'>('edit');
+
+  // Fields the user has blurred at least once — inline validation only kicks
+  // in after that, never while the user is still typing.
+  const [touched, setTouched] = useState<Set<string>>(new Set());
+  function markTouched(field: string) {
+    setTouched((prev) => {
+      if (prev.has(field)) return prev;
+      const next = new Set(prev);
+      next.add(field);
+      return next;
+    });
+  }
+
+  // Zoom / fit state.
+  const [zoomMode, setZoomMode] = useState<ZoomMode>('fit');
+  const [fitScale, setFitScale] = useState(1);
+  const scale = zoomMode === 'fit' ? fitScale : zoomMode;
+
+  // Measured content height (unscaled px) used to compute page count and
+  // page-break offsets.
+  const [contentHeight, setContentHeight] = useState(A4_HEIGHT_PX);
+  const pageCount = Math.max(1, Math.ceil(contentHeight / A4_HEIGHT_PX));
+
+  // Save-state indicator.
+  const [saveState, setSaveState] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
+  const [savedAt, setSavedAt] = useState<Date | null>(null);
+  const saveTimeoutRef = useRef<number | undefined>(undefined);
+  const isFirstDataEffect = useRef(true);
 
   // Load persisted data on mount only.
   useEffect(() => {
     setData(loadResumeData());
   }, []);
 
-  // Persist on every change.
+  // Debounced persist on every change, with an honest saving/saved/error state.
   useEffect(() => {
-    saveResumeData(data);
+    if (isFirstDataEffect.current) {
+      // Don't show "saving" for the initial load-triggered render.
+      isFirstDataEffect.current = false;
+      return;
+    }
+    setSaveState('saving');
+    if (saveTimeoutRef.current) window.clearTimeout(saveTimeoutRef.current);
+    saveTimeoutRef.current = window.setTimeout(() => {
+      const ok = saveResumeData(data);
+      if (ok) {
+        setSaveState('saved');
+        setSavedAt(new Date());
+      } else {
+        setSaveState('error');
+      }
+    }, 500);
+    return () => {
+      if (saveTimeoutRef.current) window.clearTimeout(saveTimeoutRef.current);
+    };
   }, [data]);
+
+  // Keep the "fit" scale in sync with the panel's actual measured width.
+  useEffect(() => {
+    const wrapper = wrapperRef.current;
+    if (!wrapper) return;
+    function recompute() {
+      const w = wrapper!.clientWidth;
+      const padding = 16; // 8px each side, see .preview-wrapper
+      const available = Math.max(0, w - padding);
+      setFitScale(Math.min(1, available / A4_WIDTH_PX));
+    }
+    recompute();
+    const ro = new ResizeObserver(recompute);
+    ro.observe(wrapper);
+    return () => ro.disconnect();
+  }, []);
+
+  // Re-measure when the mobile Edit/Preview toggle reveals the preview
+  // panel — it goes from display:none (0 width) to its real width, and
+  // that transition isn't always caught by the ResizeObserver callback
+  // above before paint.
+  useEffect(() => {
+    const wrapper = wrapperRef.current;
+    if (!wrapper) return;
+    const w = wrapper.clientWidth;
+    const padding = 16;
+    const available = Math.max(0, w - padding);
+    setFitScale(Math.min(1, available / A4_WIDTH_PX));
+  }, [mobileView]);
+
+  // Track the resume's actual rendered height so we know the page count and
+  // where each page-break falls.
+  useEffect(() => {
+    const el = previewRef.current;
+    if (!el) return;
+    function recompute() {
+      setContentHeight(el!.scrollHeight || A4_HEIGHT_PX);
+    }
+    recompute();
+    const ro = new ResizeObserver(recompute);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [data, template]);
 
   function updatePersonal(field: keyof ResumeData['personal'], value: string) {
     setData((d) => ({ ...d, personal: { ...d.personal, [field]: value } }));
@@ -80,6 +185,69 @@ export function Builder() {
     });
   }
 
+  function loadExample() {
+    if (!isResumeDataEmpty(data)) {
+      const ok = window.confirm('This will replace your current entries with the example resume. Continue?');
+      if (!ok) return;
+    }
+    setData(sampleResumeData);
+    showToast('Example resume loaded — edit it to make it yours.');
+  }
+
+  function clearEverything() {
+    const ok = window.confirm('This will clear everything you’ve entered. Continue?');
+    if (!ok) return;
+    setData(emptyResumeData);
+    setTouched(new Set());
+    showToast('Form cleared.');
+  }
+
+  function exportData() {
+    const base = data.personal.name.trim().replace(/\s+/g, '_') || 'resume';
+    const filename = `${base}_workslab_export.json`;
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+    showToast('Resume data exported.');
+  }
+
+  function triggerImport() {
+    importInputRef.current?.click();
+  }
+
+  function handleImportFile(file: File) {
+    const reader = new FileReader();
+    reader.onload = () => {
+      let parsed: unknown;
+      try {
+        parsed = JSON.parse(String(reader.result));
+      } catch {
+        showToast("That file isn't valid JSON — import cancelled.");
+        return;
+      }
+      const validated = validateResumeData(parsed);
+      if (!validated) {
+        showToast("That doesn't look like a Works Lab resume export — import cancelled.");
+        return;
+      }
+      if (!isResumeDataEmpty(data)) {
+        const ok = window.confirm('This will replace your current entries with the imported resume. Continue?');
+        if (!ok) return;
+      }
+      setData(validated);
+      setTouched(new Set());
+      showToast('Resume imported.');
+    };
+    reader.onerror = () => showToast("Couldn't read that file — import cancelled.");
+    reader.readAsText(file);
+  }
+
   const [skillInput, setSkillInput] = useState('');
 
   function addSkill() {
@@ -93,29 +261,27 @@ export function Builder() {
     setData((d) => ({ ...d, skills: d.skills.filter((_, idx) => idx !== i) }));
   }
 
-  async function downloadPDF() {
-    const el = previewRef.current;
-    if (!el) return;
-    setDownloading(true);
-    try {
-      const html2pdf = (await import('html2pdf.js')).default;
-      const opt = {
-        margin: 0,
-        filename: `${(data.personal.name || 'resume').replace(/\s+/g, '_')}_resume.pdf`,
-        image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 2, useCORS: true, letterRendering: true },
-        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-      };
-      await html2pdf().set(opt).from(el).save();
-      showToast('Resume downloaded!');
-    } catch {
-      showToast('Download failed. Please try again.');
-    } finally {
-      setDownloading(false);
-    }
+  // Print-based export: a second, print-only copy of the resume is portalled
+  // into #print-root (a body-level sibling of #root, see index.html) and
+  // window.print() hands it straight to the browser's own print pipeline —
+  // a real, text-based, ATS-parseable PDF, unlike the rasterized image
+  // html2pdf used to produce. The portal exists because Chromium's print/PDF
+  // pipeline emits a blank page for content left inside the on-screen
+  // layout: an ancestor that was ever laid out as a CSS Grid (.builder-layout)
+  // or an overflow:auto scroll container (.preview-wrapper) fails to repaint
+  // for print even after @media print resets display/overflow back to
+  // normal — so the resume is printed from an isolated, never-scrolled,
+  // never-grid-parented copy instead. We can't detect whether the user
+  // actually chose "Save as PDF" or cancelled the dialog, so we don't claim
+  // success either way.
+  function downloadPDF() {
+    showToast('Opening the print dialog — choose "Save as PDF" as the destination.');
+    window.print();
   }
 
   const TemplateComponent = TEMPLATES[template].Component;
+  const progress = computeOverallProgress(data);
+  const emailInvalid = touched.has('email') && data.personal.email.trim() !== '' && !EMAIL_RE.test(data.personal.email);
 
   return (
     <>
@@ -127,20 +293,35 @@ export function Builder() {
               <Link to="/" className="nav-logo">
                 Works<span>Lab</span>
               </Link>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                <span style={{ fontSize: '0.82rem', color: 'var(--gray-400)' }}>
+              <div className="builder-nav-actions">
+                <span className="builder-nav-template" style={{ fontSize: '0.82rem', color: 'var(--gray-600)' }}>
                   Template: <strong style={{ color: 'var(--black)' }}>{TEMPLATES[template].name}</strong>
                 </span>
-                <span style={{ fontSize: '0.75rem', color: 'var(--green)', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                  <span aria-hidden="true">●</span> Auto-saved
+                <span
+                  className={`save-indicator state-${saveState === 'idle' ? 'saved' : saveState}`}
+                  role="status"
+                  aria-live="polite"
+                >
+                  <span aria-hidden="true">●</span>{' '}
+                  <span className="save-indicator-full">
+                    {saveState === 'saving' && 'Saving…'}
+                    {saveState === 'error' && "Couldn't save — storage unavailable"}
+                    {(saveState === 'saved' || saveState === 'idle') &&
+                      (savedAt ? 'Saved just now' : 'Auto-saved locally')}
+                  </span>
+                  <span className="save-indicator-short">
+                    {saveState === 'saving' && 'Saving'}
+                    {saveState === 'error' && 'Error'}
+                    {(saveState === 'saved' || saveState === 'idle') && 'Saved'}
+                  </span>
                 </span>
                 <button
-                  className="btn btn-primary"
+                  className="btn btn-primary builder-nav-download"
                   style={{ padding: '9px 20px', fontSize: '0.88rem' }}
                   onClick={downloadPDF}
-                  disabled={downloading}
+                  title='In the dialog that opens, choose "Save as PDF" as the destination.'
                 >
-                  {downloading ? 'Generating...' : 'Download PDF'}
+                  Download PDF
                 </button>
               </div>
             </div>
@@ -149,17 +330,88 @@ export function Builder() {
       </div>
 
       <main id="main" tabIndex={-1}>
-        <div className="builder-layout">
+        <div className="mobile-view-toggle" role="tablist" aria-label="Builder view">
+          <button
+            type="button"
+            role="tab"
+            id="mobile-tab-edit"
+            aria-controls="mobile-panel-edit"
+            aria-selected={mobileView === 'edit'}
+            className={mobileView === 'edit' ? 'active' : ''}
+            onClick={() => setMobileView('edit')}
+          >
+            Edit
+          </button>
+          <button
+            type="button"
+            role="tab"
+            id="mobile-tab-preview"
+            aria-controls="mobile-panel-preview"
+            aria-selected={mobileView === 'preview'}
+            className={mobileView === 'preview' ? 'active' : ''}
+            onClick={() => setMobileView('preview')}
+          >
+            Preview
+          </button>
+        </div>
+        <div className="builder-layout" data-mobile-view={mobileView}>
           {/* FORM PANEL */}
-          <div className="builder-form-panel">
+          <div
+            className="builder-form-panel"
+            ref={formPanelRef}
+            role="tabpanel"
+            id="mobile-panel-edit"
+            aria-labelledby="mobile-tab-edit"
+          >
             <div className="builder-form-header">
               <h2>Build Your Resume</h2>
               <p>Your information is saved on this device only.</p>
+
+              <div className="progress-block">
+                <div className="progress-row">
+                  <div className="progress-bar-track" role="progressbar" aria-valuenow={progress.percent} aria-valuemin={0} aria-valuemax={100} aria-label="Resume completeness">
+                    <div className="progress-bar-fill" style={{ width: `${progress.percent}%` }} />
+                  </div>
+                  <span className="progress-count">
+                    {progress.doneCount} of {progress.totalCount} essentials done
+                  </span>
+                </div>
+                {progress.nextAction && <p className="progress-next">{progress.nextAction}</p>}
+              </div>
+
+              <div className="form-header-actions">
+                <button type="button" className="btn btn-outline btn-sm" onClick={loadExample}>
+                  Load example resume
+                </button>
+                <button type="button" className="btn btn-outline btn-sm" onClick={exportData}>
+                  Export JSON
+                </button>
+                <button type="button" className="btn btn-outline btn-sm" onClick={triggerImport}>
+                  Import JSON
+                </button>
+                <input
+                  ref={importInputRef}
+                  type="file"
+                  accept="application/json,.json"
+                  className="sr-only"
+                  aria-label="Import resume JSON file"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) handleImportFile(file);
+                    e.target.value = '';
+                  }}
+                />
+                <button type="button" className="btn-text-danger" onClick={clearEverything}>
+                  Clear everything
+                </button>
+              </div>
+
+              <SectionNav data={data} containerRef={formPanelRef} />
             </div>
 
             <div className="builder-sections">
               {/* Personal Info */}
-              <div className="form-section">
+              <div className="form-section" id="section-personal">
                 <div className="form-section-title">Personal Information</div>
                 <div className="form-group">
                   <label className="form-label" htmlFor="name">Full Name</label>
@@ -172,7 +424,22 @@ export function Builder() {
                 <div className="form-row">
                   <div className="form-group">
                     <label className="form-label" htmlFor="email">Email</label>
-                    <input className="form-input" id="email" type="email" placeholder="rahul@email.com" value={data.personal.email} onChange={(e) => updatePersonal('email', e.target.value)} />
+                    <input
+                      className="form-input"
+                      id="email"
+                      type="email"
+                      placeholder="rahul@email.com"
+                      value={data.personal.email}
+                      onChange={(e) => updatePersonal('email', e.target.value)}
+                      onBlur={() => markTouched('email')}
+                      aria-invalid={emailInvalid || undefined}
+                      aria-describedby={emailInvalid ? 'email-error' : undefined}
+                    />
+                    {emailInvalid && (
+                      <p className="field-error" id="email-error">
+                        That doesn't look like a valid email address.
+                      </p>
+                    )}
                   </div>
                   <div className="form-group">
                     <label className="form-label" htmlFor="phone">Phone</label>
@@ -196,9 +463,12 @@ export function Builder() {
               </div>
 
               {/* Summary */}
-              <div className="form-section">
+              <div className="form-section" id="section-summary">
                 <div className="form-section-title">Professional Summary</div>
                 <div className="form-group">
+                  <p className="field-hint" id="summary-hint">
+                    2–3 sentences: your role, years of experience, and the kind of work you want next.
+                  </p>
                   <textarea
                     className="form-textarea"
                     id="summary"
@@ -206,14 +476,24 @@ export function Builder() {
                     placeholder="Write 2-3 sentences about your professional background, key skills, and what you bring to the role..."
                     value={data.summary}
                     onChange={(e) => updateSummary(e.target.value)}
+                    aria-describedby="summary-hint"
                   />
                 </div>
               </div>
 
               {/* Experience */}
-              <div className="form-section">
+              <div className="form-section" id="section-experience">
                 <div className="form-section-title">Work Experience</div>
-                {data.experience.map((exp, i) => (
+                <p className="field-hint" id="experience-hint">
+                  Start each line with an action verb and include a number where you can — &ldquo;Cut checkout
+                  drop-off by 18%&rdquo; beats &ldquo;Worked on checkout&rdquo;.
+                </p>
+                {data.experience.map((exp, i) => {
+                  const companyKey = `exp-${i}-company`;
+                  const titleKey = `exp-${i}-title`;
+                  const titleMissing = touched.has(titleKey) && exp.company.trim() !== '' && exp.title.trim() === '';
+                  const companyMissing = touched.has(companyKey) && exp.title.trim() !== '' && exp.company.trim() === '';
+                  return (
                   <div className="entry-card" key={i}>
                     <div className="entry-card-header">
                       <div className="entry-card-title">Experience {i + 1}</div>
@@ -222,11 +502,33 @@ export function Builder() {
                     <div className="form-row">
                       <div className="form-group">
                         <label className="form-label">Company</label>
-                        <input className="form-input" placeholder="Infosys" value={exp.company} onChange={(e) => updateEntry('experience', i, 'company', e.target.value)} />
+                        <input
+                          className="form-input"
+                          placeholder="Infosys"
+                          value={exp.company}
+                          onChange={(e) => updateEntry('experience', i, 'company', e.target.value)}
+                          onBlur={() => markTouched(companyKey)}
+                          aria-invalid={companyMissing || undefined}
+                          aria-describedby={companyMissing ? `${companyKey}-error` : undefined}
+                        />
+                        {companyMissing && (
+                          <p className="field-error" id={`${companyKey}-error`}>Add the company name.</p>
+                        )}
                       </div>
                       <div className="form-group">
                         <label className="form-label">Job Title</label>
-                        <input className="form-input" placeholder="Software Engineer" value={exp.title} onChange={(e) => updateEntry('experience', i, 'title', e.target.value)} />
+                        <input
+                          className="form-input"
+                          placeholder="Software Engineer"
+                          value={exp.title}
+                          onChange={(e) => updateEntry('experience', i, 'title', e.target.value)}
+                          onBlur={() => markTouched(titleKey)}
+                          aria-invalid={titleMissing || undefined}
+                          aria-describedby={titleMissing ? `${titleKey}-error` : undefined}
+                        />
+                        {titleMissing && (
+                          <p className="field-error" id={`${titleKey}-error`}>Add the job title.</p>
+                        )}
                       </div>
                     </div>
                     <div className="form-group">
@@ -248,7 +550,8 @@ export function Builder() {
                       <textarea className="form-textarea" placeholder="Describe your role and achievements..." value={exp.description} onChange={(e) => updateEntry('experience', i, 'description', e.target.value)} />
                     </div>
                   </div>
-                ))}
+                  );
+                })}
                 <button
                   className="btn-add-entry"
                   onClick={() =>
@@ -260,7 +563,7 @@ export function Builder() {
               </div>
 
               {/* Education */}
-              <div className="form-section">
+              <div className="form-section" id="section-education">
                 <div className="form-section-title">Education</div>
                 {data.education.map((edu, i) => (
                   <div className="entry-card" key={i}>
@@ -309,8 +612,11 @@ export function Builder() {
               </div>
 
               {/* Skills */}
-              <div className="form-section">
+              <div className="form-section" id="section-skills">
                 <div className="form-section-title">Skills</div>
+                <p className="field-hint" id="skills-hint">
+                  List tools and skills a recruiter might search for. 8–12 is plenty.
+                </p>
                 <div className="skill-tags">
                   {data.skills.map((s, i) => (
                     <span className="skill-tag" key={i}>
@@ -333,6 +639,7 @@ export function Builder() {
                         addSkill();
                       }
                     }}
+                    aria-describedby="skills-hint"
                   />
                   <button className="btn btn-outline btn-sm" onClick={addSkill}>Add</button>
                 </div>
@@ -342,7 +649,7 @@ export function Builder() {
               </div>
 
               {/* Projects */}
-              <div className="form-section">
+              <div className="form-section" id="section-projects">
                 <div className="form-section-title">Projects <span>(optional)</span></div>
                 {data.projects.map((pr, i) => (
                   <div className="entry-card" key={i}>
@@ -377,7 +684,7 @@ export function Builder() {
               </div>
 
               {/* Certifications */}
-              <div className="form-section">
+              <div className="form-section" id="section-certifications">
                 <div className="form-section-title">Certifications <span>(optional)</span></div>
                 {data.certifications.map((cert, i) => (
                   <div className="entry-card" key={i}>
@@ -416,7 +723,7 @@ export function Builder() {
               </div>
 
               {/* Languages */}
-              <div className="form-section">
+              <div className="form-section" id="section-languages">
                 <div className="form-section-title">Languages <span>(optional)</span></div>
                 {data.languages.map((lang, i) => (
                   <div className="entry-card" key={i}>
@@ -452,10 +759,36 @@ export function Builder() {
           </div>
 
           {/* PREVIEW PANEL */}
-          <div className="builder-preview-panel">
+          <div
+            className="builder-preview-panel"
+            role="tabpanel"
+            id="mobile-panel-preview"
+            aria-labelledby="mobile-tab-preview"
+          >
             <div className="preview-header">
               <span className="preview-title">Live Preview</span>
-              <div style={{ display: 'flex', gap: '8px' }}>
+              <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
+                <div className="zoom-controls" role="group" aria-label="Preview zoom level">
+                  <button
+                    type="button"
+                    className={zoomMode === 'fit' ? 'active' : ''}
+                    aria-pressed={zoomMode === 'fit'}
+                    onClick={() => setZoomMode('fit')}
+                  >
+                    Fit
+                  </button>
+                  {ZOOM_STEPS.map((step) => (
+                    <button
+                      key={step}
+                      type="button"
+                      className={zoomMode === step ? 'active' : ''}
+                      aria-pressed={zoomMode === step}
+                      onClick={() => setZoomMode(step)}
+                    >
+                      {Math.round(step * 100)}%
+                    </button>
+                  ))}
+                </div>
                 <select
                   className="form-select"
                   style={{ width: 'auto', padding: '8px 12px', fontSize: '0.82rem' }}
@@ -467,19 +800,84 @@ export function Builder() {
                     <option key={t.key} value={t.key}>{t.name}</option>
                   ))}
                 </select>
-                <button className="btn btn-primary" style={{ padding: '9px 18px', fontSize: '0.85rem' }} onClick={downloadPDF} disabled={downloading}>
-                  ⬇ {downloading ? 'Generating...' : 'Download PDF'}
+                <button
+                  className="btn btn-primary preview-header-download"
+                  style={{ padding: '9px 18px', fontSize: '0.85rem' }}
+                  onClick={downloadPDF}
+                  title='In the dialog that opens, choose "Save as PDF" as the destination.'
+                >
+                  ⬇ Download PDF
                 </button>
               </div>
             </div>
-            <div className="preview-wrapper" style={{ overflow: 'hidden' }}>
-              <div ref={previewRef} style={{ transformOrigin: 'top left', minHeight: '297mm' }}>
-                <TemplateComponent data={data} />
+
+            <p className="print-hint">
+              This opens your browser's print dialog — choose <strong>Save as PDF</strong> as the destination.
+            </p>
+
+            {pageCount > 1 && (
+              <p className="page-count-notice">
+                {pageCount} pages — recruiters prefer 1 page for under 10 years of experience.
+              </p>
+            )}
+
+            <div className="preview-wrapper" ref={wrapperRef}>
+              <div
+                style={{
+                  width: A4_WIDTH_PX * scale,
+                  height: Math.max(contentHeight, A4_HEIGHT_PX) * scale,
+                }}
+              >
+                <div
+                  className="a4-page"
+                  style={{
+                    width: A4_WIDTH_PX,
+                    minHeight: A4_HEIGHT_PX,
+                    transform: `scale(${scale})`,
+                  }}
+                >
+                  <div ref={previewRef}>
+                    <TemplateComponent data={data} />
+                  </div>
+
+                  {/* Page-break indicators: a sibling of previewRef, and
+                      screen-only — the print export uses a separate portal
+                      (see the bottom of this component), never this node. */}
+                  {pageCount > 1 && (
+                    <div
+                      className="page-break-overlay"
+                      aria-hidden="true"
+                      style={{ width: A4_WIDTH_PX, height: pageCount * A4_HEIGHT_PX }}
+                    >
+                      {Array.from({ length: pageCount - 1 }, (_, i) => (
+                        <div
+                          key={i}
+                          className="page-break-line"
+                          style={{ top: (i + 1) * A4_HEIGHT_PX }}
+                        >
+                          <span className="page-break-label">Page {i + 2}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           </div>
         </div>
       </main>
+
+      {/* Print-only portal (see downloadPDF() above for why this can't just
+          be the on-screen .a4-page node). #print-root is a body-level
+          sibling of #root defined in index.html and is display:none on
+          screen — visible only under @media print. */}
+      {document.getElementById('print-root') &&
+        createPortal(
+          <div className="print-resume-page">
+            <TemplateComponent data={data} />
+          </div>,
+          document.getElementById('print-root')!,
+        )}
     </>
   );
 }

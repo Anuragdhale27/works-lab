@@ -14,7 +14,7 @@ export function ClassicTemplate({ data }: { data: ResumeData }) {
       {data.summary && (
         <>
           <div className="rcls-section-title">Professional Summary</div>
-          <div className="rcls-desc" style={{ marginBottom: '10px' }}>{multiline(data.summary)}</div>
+          <div className="rcls-desc" style={{ marginBottom: 'var(--r-sp-3)' }}>{multiline(data.summary)}</div>
         </>
       )}
 

@@ -1,8 +1,8 @@
 # Works Lab
 
 Works Lab is a resume-builder site: ATS-friendly resume templates for the Indian job market, a
-guided form that renders a live preview, and a client-side PDF download — all for a one-time
-payment, no subscription.
+guided form that renders a live preview, and a PDF export via the browser's own print pipeline —
+all for a one-time payment, no subscription.
 
 **Live site:** https://resume.workslab.in (deployed via GitHub Pages, see `.github/workflows/deploy.yml`)
 
@@ -11,7 +11,9 @@ payment, no subscription.
 - [React 18](https://react.dev/) + [TypeScript](https://www.typescriptlang.org/)
 - [Vite](https://vite.dev/) — dev server and build
 - [react-router-dom](https://reactrouter.com/) (`BrowserRouter`) for client-side routing
-- [html2pdf.js](https://github.com/eKoopmans/html2pdf.js) for client-side PDF export
+- PDF export via `window.print()` and a `@media print` stylesheet (`src/styles/global.css`) —
+  the browser's own print pipeline produces a real, text-based, ATS-parseable PDF, not a
+  rasterized image
 - Plain CSS with custom properties for design tokens (no CSS framework)
 - [bun](https://bun.sh/) as the package manager and script runner — not npm/yarn
 - [ESLint](https://eslint.org/) + [Vitest](https://vitest.dev/) / Testing Library
@@ -62,7 +64,7 @@ src/
     templates.test.tsx
   pages/
     Landing.tsx               /
-    Builder.tsx                /builder — form + live preview + PDF download
+    Builder.tsx                /builder — form + live preview + print-based PDF export
     TemplateDetail.tsx        /template/:templateKey
     Privacy.tsx                /privacy
     Terms.tsx                  /terms
