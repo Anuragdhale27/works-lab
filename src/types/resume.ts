@@ -6,6 +6,8 @@ export interface PersonalInfo {
   location: string;
   linkedin: string;
   portfolio: string;
+  /** Downscaled JPEG data URL, empty when no photo. */
+  photo: string;
 }
 
 export interface ExperienceEntry {
@@ -65,6 +67,7 @@ export const emptyResumeData: ResumeData = {
     location: '',
     linkedin: '',
     portfolio: '',
+    photo: '',
   },
   summary: '',
   experience: [],

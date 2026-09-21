@@ -104,4 +104,3 @@ custom domain keeps working.
 - Replace the payment link in `src/lib/config.ts` with your real checkout URL.
 - Replace the placeholder testimonials on the landing page with real customer feedback (or remove
   the section) — they're intentionally left as marked placeholders.
-- Confirm `hello@workslab.in` is the address you want published.

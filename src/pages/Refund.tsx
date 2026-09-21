@@ -14,10 +14,10 @@ export function Refund() {
           </p>
           <p>
             If you experience a technical issue that prevents you from accessing the resume builder, please email{' '}
-            hello@workslab.in within 7 days of purchase and we will work to resolve it.
+            adwork895@gmail.com within 7 days of purchase and we will work to resolve it.
           </p>
           <p>
-            For any concerns, contact us at <a href="mailto:hello@workslab.in">hello@workslab.in</a>
+            For any concerns, contact us at <a href="mailto:adwork895@gmail.com">adwork895@gmail.com</a>
           </p>
         </div>
       </section>

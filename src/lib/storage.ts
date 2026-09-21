@@ -74,6 +74,8 @@ export function validateResumeData(raw: unknown): ResumeData | null {
       location: stringField(personalRaw.location),
       linkedin: stringField(personalRaw.linkedin),
       portfolio: stringField(personalRaw.portfolio),
+      // Only accept inline images so an imported file cannot point the preview at a remote URL.
+      photo: /^data:image\/(jpeg|png|webp);base64,/.test(stringField(personalRaw.photo)) ? stringField(personalRaw.photo) : '',
     },
     summary: stringField(raw.summary),
     experience: sanitizeEntryArray(raw.experience, {

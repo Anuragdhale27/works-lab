@@ -7,9 +7,14 @@ export function MinimalTemplate({ data }: { data: ResumeData }) {
 
   return (
     <div className="resume-minimal">
-      <div className="rmin-name">{p.name || 'Your Name'}</div>
-      {p.title && <div className="rmin-title">{p.title}</div>}
-      {contactParts.length > 0 && <div className="rmin-contact">{contactParts.join('   ·   ')}</div>}
+      <div className="rmin-head">
+        <div className="rmin-head-text">
+          <div className="rmin-name">{p.name || 'Your Name'}</div>
+          {p.title && <div className="rmin-title">{p.title}</div>}
+          {contactParts.length > 0 && <div className="rmin-contact">{contactParts.join('   ·   ')}</div>}
+        </div>
+        {p.photo && <img className="rmin-photo" src={p.photo} alt="" />}
+      </div>
       <hr className="rmin-divider" />
 
       {data.summary && (

@@ -6,6 +6,7 @@ export function ModernTemplate({ data }: { data: ResumeData }) {
   return (
     <div className="resume-modern">
       <div className="rmod-header">
+        <div className="rmod-head-text">
         <div className="rmod-name">{p.name || 'Your Name'}</div>
         <div className="rmod-title">{p.title || 'Professional Title'}</div>
         <div className="rmod-contact">
@@ -15,6 +16,8 @@ export function ModernTemplate({ data }: { data: ResumeData }) {
           {p.linkedin && <span>🔗 {p.linkedin}</span>}
           {p.portfolio && <span>🌐 {p.portfolio}</span>}
         </div>
+        </div>
+        {p.photo && <img className="rmod-photo" src={p.photo} alt="" />}
       </div>
       <div className="rmod-body">
         {data.summary && (

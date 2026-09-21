@@ -7,9 +7,12 @@ export function ExecutiveTemplate({ data }: { data: ResumeData }) {
   return (
     <div className="resume-executive">
       <div className="rexe-header">
+        <div className="rexe-head-text">
         <div className="rexe-name">{p.name || 'Your Name'}</div>
         <div className="rexe-title">{p.title || 'Professional Title'}</div>
         <div className="rexe-contact">{contactParts.join('  ·  ')}</div>
+        </div>
+        {p.photo && <img className="rexe-photo" src={p.photo} alt="" />}
       </div>
       <div className="rexe-body">
         {data.summary && (
