@@ -136,6 +136,11 @@ export function Builder() {
       // The wrapper carries the page background so it continues below the template root.
       if (template === 'executive') el.style.background = '#0d0d0d';
       if (template === 'minimal') el.style.background = 'linear-gradient(to right, #eef6f5 167px, #0f766e 167px 170px, #fff 170px)';
+      // html2canvas measures text baselines in the live document with an inline <img>; the global
+      // `img { display: block }` breaks that and pushes text down inside boxes (clipped pills/titles).
+      const fix = document.createElement('style');
+      fix.textContent = 'span + img { display: inline !important; }';
+      document.head.appendChild(fix);
       const opt = {
         margin: 0,
         filename: `${(data.personal.name.replace(/[^\p{L}\p{N}]+/gu, '_').replace(/^_+|_+$/g, '').slice(0, 60) || 'resume')}_resume.pdf`,
@@ -146,6 +151,7 @@ export function Builder() {
       try {
         await html2pdf().set(opt).from(el).save();
       } finally {
+        fix.remove();
         el.style.width = prev.width;
         el.style.minHeight = prev.minHeight;
         el.style.background = prev.background;
