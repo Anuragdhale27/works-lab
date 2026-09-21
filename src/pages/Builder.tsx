@@ -44,6 +44,34 @@ export function Builder() {
     setData((d) => ({ ...d, personal: { ...d.personal, [field]: value } }));
   }
 
+  const MAX_PHOTO_BYTES = 5 * 1024 * 1024;
+
+  // Validates, then downscales to a 240px-max JPEG so the data URL stays small enough for localStorage.
+  function handlePhoto(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    if (!/^image\/(jpeg|png|webp)$/.test(file.type)) return showToast('Please choose a JPG, PNG or WebP image.');
+    if (file.size > MAX_PHOTO_BYTES) return showToast('Photo must be under 5 MB.');
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => {
+      const side = Math.min(img.width, img.height);
+      const size = Math.min(240, side);
+      const canvas = document.createElement('canvas');
+      canvas.width = canvas.height = size;
+      // Centre-crop to a square.
+      canvas.getContext('2d')?.drawImage(img, (img.width - side) / 2, (img.height - side) / 2, side, side, 0, 0, size, size);
+      updatePersonal('photo', canvas.toDataURL('image/jpeg', 0.85));
+      URL.revokeObjectURL(url);
+    };
+    img.onerror = () => {
+      URL.revokeObjectURL(url);
+      showToast('Could not read that image.');
+    };
+    img.src = url;
+  }
+
   function updateSummary(value: string) {
     setData((d) => ({ ...d, summary: value }));
   }
@@ -161,6 +189,18 @@ export function Builder() {
               {/* Personal Info */}
               <div className="form-section">
                 <div className="form-section-title">Personal Information</div>
+                <div className="form-group">
+                  <label className="form-label" htmlFor="photo">Photo (optional)</label>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    {data.personal.photo && (
+                      <img src={data.personal.photo} alt="Your photo" style={{ width: 48, height: 48, borderRadius: '50%', objectFit: 'cover' }} />
+                    )}
+                    <input id="photo" type="file" accept="image/jpeg,image/png,image/webp" onChange={handlePhoto} />
+                    {data.personal.photo && (
+                      <button type="button" className="btn" onClick={() => updatePersonal('photo', '')}>Remove</button>
+                    )}
+                  </div>
+                </div>
                 <div className="form-group">
                   <label className="form-label" htmlFor="name">Full Name</label>
                   <input className="form-input" id="name" placeholder="Rahul Sharma" value={data.personal.name} onChange={(e) => updatePersonal('name', e.target.value)} />

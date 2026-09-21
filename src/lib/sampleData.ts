@@ -9,6 +9,7 @@ export const sampleResumeData: ResumeData = {
     location: 'Bengaluru, India',
     linkedin: 'linkedin.com/in/rahuls',
     portfolio: 'github.com/rahuls',
+    photo: '',
   },
   summary:
     'Results-driven software engineer with 3+ years of experience building scalable web applications. Proficient in React, Node.js, and cloud infrastructure.',

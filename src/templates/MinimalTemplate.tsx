@@ -13,7 +13,7 @@ export function MinimalTemplate({ data }: { data: ResumeData }) {
   return (
     <div className="resume-minimal">
       <div className="rmin-sidebar">
-        <div className="rmin-avatar">{initials}</div>
+        {p.photo ? <img className="rmin-photo" src={p.photo} alt="" /> : <div className="rmin-avatar">{initials}</div>}
         <div className="rmin-name">{p.name || 'Your Name'}</div>
         <div className="rmin-title">{p.title || 'Professional Title'}</div>
 
