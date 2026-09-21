@@ -21,7 +21,7 @@ export function Privacy() {
 
           <h3>Contact</h3>
           <p>
-            For any privacy questions, email us at <a href="mailto:hello@workslab.in">hello@workslab.in</a>
+            For any privacy questions, email us at <a href="mailto:adwork895@gmail.com">adwork895@gmail.com</a>
           </p>
         </div>
       </section>

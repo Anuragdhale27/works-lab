@@ -21,7 +21,7 @@ export function Terms() {
 
           <h3>Contact</h3>
           <p>
-            <a href="mailto:hello@workslab.in">hello@workslab.in</a>
+            <a href="mailto:adwork895@gmail.com">adwork895@gmail.com</a>
           </p>
         </div>
       </section>
