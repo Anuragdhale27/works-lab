@@ -3,21 +3,30 @@ import { exportResumeToDocx } from './exportDocx';
 import type { ResumeData } from '../types/resume';
 
 describe('exportDocx', () => {
+  let capturedBlob: Blob | null = null;
+
   beforeEach(() => {
-    // Mock URL.createObjectURL and URL.revokeObjectURL
-    URL.createObjectURL = vi.fn(() => 'blob:mock-url');
+    capturedBlob = null;
+    // Mock URL.createObjectURL and URL.revokeObjectURL to capture the blob
+    URL.createObjectURL = vi.fn((obj: unknown) => {
+      if (obj instanceof Blob) {
+        capturedBlob = obj;
+      }
+      return 'blob:mock-url';
+    });
     URL.revokeObjectURL = vi.fn();
 
-    // Mock createElement and click
+    // Mock DOM methods
     document.body.appendChild = vi.fn();
     document.body.removeChild = vi.fn();
   });
 
   afterEach(() => {
     vi.clearAllMocks();
+    capturedBlob = null;
   });
 
-  it('should generate a .docx file with real heading styles (Heading1/Heading2)', async () => {
+  it('should generate a .docx file with real heading styles (Heading1/Heading2) and custom sections', async () => {
     const sampleData: ResumeData = {
       personal: {
         name: 'John Doe',
@@ -85,7 +94,20 @@ describe('exportDocx', () => {
           description: 'For outstanding performance',
         },
       ],
-      customSections: [],
+      customSections: [
+        {
+          id: 'custom-1',
+          title: 'Volunteering',
+          items: [
+            {
+              heading: 'Community Mentor',
+              subheading: 'Local Tech Nonprofit',
+              date: 'Jan 2022 – Dec 2023',
+              description: '• Mentored 10+ junior developers\n• Led weekly workshops',
+            },
+          ],
+        },
+      ],
       sectionOrder: [],
       accent: '#7f1d1d',
     };
@@ -96,6 +118,28 @@ describe('exportDocx', () => {
     // Verify that a blob was created and download was triggered
     expect(URL.createObjectURL).toHaveBeenCalled();
     expect(URL.revokeObjectURL).toHaveBeenCalled();
+    expect(capturedBlob).toBeTruthy();
+
+    // Extract and validate the document XML
+    if (capturedBlob) {
+      const arrayBuffer = await capturedBlob.arrayBuffer();
+      // Use JSZip to extract the document XML from the docx
+      const { default: JSZip } = await import('jszip');
+      const zip = new JSZip();
+      await zip.loadAsync(arrayBuffer);
+
+      // Read the document.xml file
+      const documentXml = await zip.file('word/document.xml')?.async('text');
+      expect(documentXml).toBeTruthy();
+
+      if (documentXml) {
+        // Verify heading styles are present
+        expect(documentXml).toContain('w:val="Heading1"');
+        expect(documentXml).toContain('w:val="Heading2"');
+        // Verify custom section title appears
+        expect(documentXml).toContain('Volunteering');
+      }
+    }
   });
 
   it('should handle missing name gracefully', async () => {
@@ -123,6 +167,7 @@ describe('exportDocx', () => {
     };
 
     await expect(exportResumeToDocx(minimalData)).resolves.toBeUndefined();
+    expect(URL.createObjectURL).toHaveBeenCalled();
   });
 
   it('should parse descriptions with bullets correctly', async () => {
@@ -150,5 +195,6 @@ describe('exportDocx', () => {
     };
 
     await expect(exportResumeToDocx(dataWithBullets)).resolves.toBeUndefined();
+    expect(URL.createObjectURL).toHaveBeenCalled();
   });
 });

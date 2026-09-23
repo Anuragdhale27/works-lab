@@ -5,6 +5,8 @@ import { Link } from 'react-router-dom';
 import type {
   AwardEntry,
   CertificationEntry,
+  CustomItem,
+  CustomSection,
   EducationEntry,
   ExperienceEntry,
   LanguageEntry,
@@ -22,6 +24,7 @@ import { SectionNav } from '../components/SectionNav';
 import { sampleResumeData } from '../lib/sampleData';
 import { computeOverallProgress, isResumeDataEmpty } from '../lib/completeness';
 import { exportResumeToDocx } from '../lib/exportDocx';
+import { resolveSectionOrder, moveSection as moveSectionOrder } from '../lib/sectionOrder';
 
 const LEVELS = ['Native', 'Fluent', 'Professional', 'Conversational', 'Basic'];
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -454,6 +457,197 @@ export function Builder() {
 
   function removeSkill(i: number) {
     setData((d) => ({ ...d, skills: d.skills.filter((_, idx) => idx !== i) }));
+  }
+
+  // Generate a unique custom section ID (base36 timestamp + random)
+  function generateCustomSectionId(): string {
+    let id = Date.now().toString(36);
+    id += Math.random().toString(36).substring(2, 8);
+    return id.substring(0, 40).replace(/[^a-z0-9-]/g, '');
+  }
+
+  function addCustomSection() {
+    // Structural operation: always create new history entry
+    setData(
+      (d) => ({
+        ...d,
+        customSections: [
+          ...d.customSections,
+          {
+            id: generateCustomSectionId(),
+            title: '',
+            items: [],
+          } as CustomSection,
+        ],
+      }),
+      true
+    );
+  }
+
+  function updateCustomSection(customId: string, field: keyof CustomSection, value: unknown) {
+    setData((d) => ({
+      ...d,
+      customSections: d.customSections.map((cs) => (cs.id === customId ? { ...cs, [field]: value } : cs)),
+    }));
+  }
+
+  function removeCustomSection(customId: string) {
+    // Structural operation: always create new history entry
+    setData(
+      (d) => {
+        const filtered = d.customSections.filter((cs) => cs.id !== customId);
+        // Also remove from sectionOrder
+        const newOrder = d.sectionOrder.filter((key) => key !== `custom:${customId}`);
+        return { ...d, customSections: filtered, sectionOrder: newOrder };
+      },
+      true
+    );
+  }
+
+  function addCustomItem(customId: string) {
+    // Structural operation: always create new history entry
+    setData(
+      (d) => ({
+        ...d,
+        customSections: d.customSections.map((cs) =>
+          cs.id === customId ? { ...cs, items: [...cs.items, { heading: '', subheading: '', date: '', description: '' }] } : cs
+        ),
+      }),
+      true
+    );
+  }
+
+  function updateCustomItem(customId: string, itemIndex: number, field: keyof CustomItem, value: string) {
+    setData((d) => ({
+      ...d,
+      customSections: d.customSections.map((cs) =>
+        cs.id === customId
+          ? {
+              ...cs,
+              items: cs.items.map((item, idx) => (idx === itemIndex ? { ...item, [field]: value } : item)),
+            }
+          : cs
+      ),
+    }));
+  }
+
+  function removeCustomItem(customId: string, itemIndex: number) {
+    // Structural operation: always create new history entry
+    setData(
+      (d) => ({
+        ...d,
+        customSections: d.customSections.map((cs) =>
+          cs.id === customId
+            ? { ...cs, items: cs.items.filter((_, idx) => idx !== itemIndex) }
+            : cs
+        ),
+      }),
+      true
+    );
+  }
+
+  function moveCustomItem(customId: string, itemIndex: number, direction: 'up' | 'down') {
+    // Structural operation: always create new history entry
+    setData(
+      (d) => ({
+        ...d,
+        customSections: d.customSections.map((cs) => {
+          if (cs.id !== customId) return cs;
+          const newIndex = direction === 'up' ? itemIndex - 1 : itemIndex + 1;
+          if (newIndex < 0 || newIndex >= cs.items.length) return cs;
+          const newItems = [...cs.items];
+          [newItems[itemIndex], newItems[newIndex]] = [newItems[newIndex], newItems[itemIndex]];
+          return { ...cs, items: newItems };
+        }),
+      }),
+      true
+    );
+  }
+
+  function duplicateCustomItem(customId: string, itemIndex: number) {
+    // Structural operation: always create new history entry
+    setData(
+      (d) => ({
+        ...d,
+        customSections: d.customSections.map((cs) => {
+          if (cs.id !== customId) return cs;
+          if (itemIndex < 0 || itemIndex >= cs.items.length) return cs;
+          const copy = structuredClone(cs.items[itemIndex]);
+          const newItems = [...cs.items];
+          newItems.splice(itemIndex + 1, 0, copy);
+          return { ...cs, items: newItems };
+        }),
+      }),
+      true
+    );
+  }
+
+  function handleAddBulletCustom(customId: string, itemIndex: number, textareaId: string) {
+    const textarea = document.getElementById(textareaId) as HTMLTextAreaElement | null;
+    if (!textarea) return;
+    const start = textarea.selectionStart;
+    const text = textarea.value;
+    const beforeCursor = text.substring(0, start);
+    const lastNewline = beforeCursor.lastIndexOf('\n');
+    const isAtLineStart = lastNewline === -1 || beforeCursor.substring(lastNewline + 1).trim() === '';
+
+    if (isAtLineStart && lastNewline !== -1) {
+      // Insert bullet at start of current line (before cursor)
+      const lineStart = lastNewline + 1;
+      const newValue = text.substring(0, lineStart) + '• ' + text.substring(lineStart);
+      pendingCaretRef.current = { textareaId, position: lineStart + 2 };
+      updateCustomItem(customId, itemIndex, 'description', newValue);
+    } else {
+      // Append bullet on new line
+      const newValue = text + (text && !text.endsWith('\n') ? '\n' : '') + '• ';
+      pendingCaretRef.current = { textareaId, position: newValue.length };
+      updateCustomItem(customId, itemIndex, 'description', newValue);
+    }
+  }
+
+  function handleBulletKeydownCustom(
+    e: React.KeyboardEvent<HTMLTextAreaElement>,
+    customId: string,
+    itemIndex: number,
+  ) {
+    if (e.key !== 'Enter') return;
+    const textarea = e.currentTarget;
+    const start = textarea.selectionStart;
+    const text = textarea.value;
+    const beforeCursor = text.substring(0, start);
+    const lineStart = beforeCursor.lastIndexOf('\n') + 1;
+    const currentLine = text.substring(lineStart, start);
+    const isLineStartWithBullet = /^[•\-*–]\s/.test(currentLine.trim());
+    const isOnlyBullet = /^[•\-*–]\s*$/.test(currentLine);
+
+    if (isOnlyBullet) {
+      // Remove the bullet marker and continue on new line
+      e.preventDefault();
+      const newText = text.substring(0, lineStart) + '\n' + text.substring(start);
+      const textareaId = textarea.id;
+      pendingCaretRef.current = { textareaId, position: lineStart + 1 };
+      updateCustomItem(customId, itemIndex, 'description', newText);
+    } else if (isLineStartWithBullet) {
+      // Continue with a new bullet on next line
+      e.preventDefault();
+      const afterCursor = text.substring(start);
+      const newText = text.substring(0, start) + '\n• ' + afterCursor;
+      const textareaId = textarea.id;
+      pendingCaretRef.current = { textareaId, position: start + 3 };
+      updateCustomItem(customId, itemIndex, 'description', newText);
+    }
+  }
+
+  function handleMoveSection(sectionKey: string, direction: 'up' | 'down') {
+    // Structural operation: always create new history entry
+    const resolved = resolveSectionOrder(data);
+    const newOrder = moveSectionOrder(resolved, sectionKey, direction === 'up' ? -1 : 1);
+    setData((d) => ({ ...d, sectionOrder: newOrder }), true);
+  }
+
+  function handleResetSectionOrder() {
+    // Structural operation: always create new history entry
+    setData((d) => ({ ...d, sectionOrder: [] }), true);
   }
 
   // Print-based export: a second, print-only copy of the resume is portalled
@@ -1232,7 +1426,223 @@ export function Builder() {
                   + Add Award
                 </button>
               </div>
+
+              {/* Custom Sections */}
+              {data.customSections.map((customSection) => (
+                <div className="form-section" id={`section-custom-${customSection.id}`} key={customSection.id}>
+                  <div className="form-section-title-with-actions">
+                    <input
+                      className="form-input"
+                      style={{ marginBottom: '0', fontSize: '1.1rem', fontWeight: '600' }}
+                      placeholder="e.g. Volunteering, Publications, Hobbies"
+                      value={customSection.title}
+                      onChange={(e) => updateCustomSection(customSection.id, 'title', e.target.value)}
+                      aria-label="Section title"
+                    />
+                    <button
+                      className="btn-remove"
+                      onClick={() => {
+                        const ok = window.confirm('Delete this entire section?');
+                        if (ok) removeCustomSection(customSection.id);
+                      }}
+                      title="Delete section"
+                    >
+                      Delete section
+                    </button>
+                  </div>
+
+                  {customSection.items.map((item, itemIdx) => (
+                    <div className="entry-card" key={itemIdx}>
+                      <div className="entry-card-header">
+                        <div className="entry-card-title">Item {itemIdx + 1}</div>
+                        <div className="entry-card-actions">
+                          {itemIdx > 0 && (
+                            <button
+                              className="btn-move"
+                              onClick={() => moveCustomItem(customSection.id, itemIdx, 'up')}
+                              aria-label="Move up"
+                              title="Move up"
+                            >
+                              ↑
+                            </button>
+                          )}
+                          {itemIdx < customSection.items.length - 1 && (
+                            <button
+                              className="btn-move"
+                              onClick={() => moveCustomItem(customSection.id, itemIdx, 'down')}
+                              aria-label="Move down"
+                              title="Move down"
+                            >
+                              ↓
+                            </button>
+                          )}
+                          <button
+                            className="btn-move"
+                            onClick={() => duplicateCustomItem(customSection.id, itemIdx)}
+                            title="Duplicate"
+                          >
+                            ⧉
+                          </button>
+                          <button
+                            className="btn-remove"
+                            onClick={() => removeCustomItem(customSection.id, itemIdx)}
+                          >
+                            Remove
+                          </button>
+                        </div>
+                      </div>
+                      <div className="form-row">
+                        <div className="form-group">
+                          <label className="form-label">Heading</label>
+                          <input
+                            className="form-input"
+                            placeholder="e.g. Project name or volunteering title"
+                            value={item.heading}
+                            onChange={(e) => updateCustomItem(customSection.id, itemIdx, 'heading', e.target.value)}
+                          />
+                        </div>
+                        <div className="form-group">
+                          <label className="form-label">Subheading</label>
+                          <input
+                            className="form-input"
+                            placeholder="e.g. Organization or publication"
+                            value={item.subheading}
+                            onChange={(e) => updateCustomItem(customSection.id, itemIdx, 'subheading', e.target.value)}
+                          />
+                        </div>
+                      </div>
+                      <div className="form-group">
+                        <label className="form-label">Date</label>
+                        <input
+                          className="form-input"
+                          placeholder="e.g. Jan 2023 – Dec 2023"
+                          value={item.date}
+                          onChange={(e) => updateCustomItem(customSection.id, itemIdx, 'date', e.target.value)}
+                        />
+                      </div>
+                      <div className="form-group">
+                        <label className="form-label">Description</label>
+                        <p className="field-hint">Start lines with • to create bullet points. Press Enter to continue the list.</p>
+                        <div className="textarea-wrapper">
+                          <button
+                            type="button"
+                            className="btn-add-bullet"
+                            onClick={() => handleAddBulletCustom(customSection.id, itemIdx, `custom-desc-${customSection.id}-${itemIdx}`)}
+                            onMouseDown={(e) => e.preventDefault()}
+                            aria-label="Add bullet point"
+                            title="Add bullet point"
+                          >
+                            • Add bullet
+                          </button>
+                          <textarea
+                            id={`custom-desc-${customSection.id}-${itemIdx}`}
+                            className="form-textarea"
+                            placeholder="• Start lines with a bullet to create a list&#10;• Or write a paragraph normally&#10;• Mixing bullets and text is fine"
+                            value={item.description}
+                            onChange={(e) => updateCustomItem(customSection.id, itemIdx, 'description', e.target.value)}
+                            onKeyDown={(e) => handleBulletKeydownCustom(e, customSection.id, itemIdx)}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+
+                  <button
+                    className="btn-add-entry"
+                    onClick={() => addCustomItem(customSection.id)}
+                  >
+                    + Add Item
+                  </button>
+                </div>
+              ))}
+
+              {/* Add Custom Section Button */}
+              <div className="form-section" style={{ paddingTop: '8px', paddingBottom: '8px', border: 'none', backgroundColor: 'transparent' }}>
+                <button className="btn-add-entry" onClick={addCustomSection}>
+                  + Add Custom Section
+                </button>
+              </div>
             </div>
+
+            {/* Section Order Panel */}
+            <details className="section-order-panel" style={{ margin: '24px 0', padding: '16px', backgroundColor: 'var(--input-bg)', borderRadius: '6px', border: '1px solid var(--gray-200)' }}>
+              <summary style={{ cursor: 'pointer', fontWeight: '600', marginBottom: '12px', userSelect: 'none' }}>
+                Section Order
+              </summary>
+              {template === 'sidebar' || template === 'split' ? (
+                <p style={{ fontSize: '0.875rem', color: 'var(--gray-600)', marginBottom: '12px' }}>
+                  In two-column templates, sections move within their own column.
+                </p>
+              ) : null}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '16px' }}>
+                {resolveSectionOrder(data).map((sectionKey, idx, arr) => {
+                  let label = '';
+                  let isEmpty = false;
+
+                  if (sectionKey === 'summary') {
+                    label = 'Professional Summary';
+                    isEmpty = !data.summary.trim();
+                  } else if (sectionKey === 'experience') {
+                    label = 'Work Experience';
+                    isEmpty = data.experience.length === 0;
+                  } else if (sectionKey === 'education') {
+                    label = 'Education';
+                    isEmpty = data.education.length === 0;
+                  } else if (sectionKey === 'skills') {
+                    label = 'Skills';
+                    isEmpty = data.skills.length === 0;
+                  } else if (sectionKey === 'projects') {
+                    label = 'Projects';
+                    isEmpty = data.projects.length === 0;
+                  } else if (sectionKey === 'certifications') {
+                    label = 'Certifications';
+                    isEmpty = data.certifications.length === 0;
+                  } else if (sectionKey === 'languages') {
+                    label = 'Languages';
+                    isEmpty = data.languages.length === 0;
+                  } else if (sectionKey === 'awards') {
+                    label = 'Awards & Achievements';
+                    isEmpty = data.awards.length === 0;
+                  } else if (sectionKey.startsWith('custom:')) {
+                    const customId = sectionKey.slice(7);
+                    const customSec = data.customSections.find((c) => c.id === customId);
+                    label = customSec?.title || 'Untitled section';
+                    isEmpty = !customSec || (customSec.items.length === 0 && !customSec.title.trim());
+                  }
+
+                  return (
+                    <div key={sectionKey} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingRight: '8px' }}>
+                      <span style={{ fontSize: '0.9rem', color: isEmpty ? 'var(--gray-400)' : 'inherit' }}>
+                        {label} {isEmpty && <span style={{ fontSize: '0.8rem' }}>(empty)</span>}
+                      </span>
+                      <div style={{ display: 'flex', gap: '4px' }}>
+                        <button
+                          className="btn-move"
+                          onClick={() => handleMoveSection(sectionKey, 'up')}
+                          disabled={idx === 0}
+                          aria-label={`Move ${label} up`}
+                          title="Move up"
+                        >
+                          ↑
+                        </button>
+                        <button
+                          className="btn-move"
+                          onClick={() => handleMoveSection(sectionKey, 'down')}
+                          disabled={idx === arr.length - 1}
+                          aria-label={`Move ${label} down`}
+                          title="Move down"
+                        >
+                          ↓
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+              <button className="btn btn-outline btn-sm" onClick={handleResetSectionOrder}>
+                Reset to default order
+              </button>
+            </details>
           </div>
 
           {/* PREVIEW PANEL */}

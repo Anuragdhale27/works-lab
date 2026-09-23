@@ -17,6 +17,7 @@ export function SectionNav({ data, containerRef }: SectionNavProps) {
   const statuses = computeSectionStatuses(data);
   const [activeKey, setActiveKey] = useState<string>(SECTIONS[0].key);
   const navRef = useRef<HTMLDivElement>(null);
+  const hasCustomSections = data.customSections.length > 0;
 
   // Track which section is currently in view within the form panel's own
   // scroll container (not the window).
@@ -24,9 +25,13 @@ export function SectionNav({ data, containerRef }: SectionNavProps) {
     const container = containerRef.current;
     if (!container) return;
 
-    const elements = SECTIONS.map((s) => document.getElementById(`section-${s.key}`)).filter(
-      (el): el is HTMLElement => el !== null,
-    );
+    const sectionIds = [
+      ...SECTIONS.map((s) => `section-${s.key}`),
+      ...(hasCustomSections ? ['section-custom-' + data.customSections[0].id] : []),
+    ];
+    const elements = sectionIds
+      .map((id) => document.getElementById(id))
+      .filter((el): el is HTMLElement => el !== null);
     if (elements.length === 0) return;
 
     const headerEl = container.querySelector('.builder-form-header') as HTMLElement | null;
@@ -54,17 +59,18 @@ export function SectionNav({ data, containerRef }: SectionNavProps) {
 
     elements.forEach((el) => observer.observe(el));
     return () => observer.disconnect();
-  }, [containerRef, data]);
+  }, [containerRef, data, hasCustomSections]);
 
-  function goToSection(key: string) {
+  function goToSection(key: string, customId?: string) {
     const container = containerRef.current;
-    const el = document.getElementById(`section-${key}`);
+    const sectionId = customId ? `section-custom-${customId}` : `section-${key}`;
+    const el = document.getElementById(sectionId);
     if (!container || !el) return;
     const headerEl = container.querySelector('.builder-form-header') as HTMLElement | null;
     const offset = headerEl ? headerEl.offsetHeight + 12 : 12;
     const top = el.offsetTop - offset;
     container.scrollTo({ top: Math.max(0, top), behavior: 'smooth' });
-    setActiveKey(key);
+    setActiveKey(customId ? `custom-${customId}` : key);
   }
 
   return (
@@ -87,6 +93,17 @@ export function SectionNav({ data, containerRef }: SectionNavProps) {
           </button>
         );
       })}
+      {hasCustomSections && (
+        <button
+          type="button"
+          className="section-nav-item status-empty"
+          onClick={() => goToSection('', data.customSections[0].id)}
+          aria-current={activeKey.startsWith('custom-') ? 'true' : undefined}
+        >
+          <span className="section-nav-dot status-partial" aria-hidden="true" />
+          <span className="section-nav-label">Custom sections</span>
+        </button>
+      )}
     </nav>
   );
 }

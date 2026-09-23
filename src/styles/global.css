@@ -834,6 +834,25 @@ footer {
 
 .form-section-title span { font-size: 0.75rem; color: var(--gray-400); font-weight: 400; }
 
+.form-section-title-with-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.form-section-title-with-actions .form-input {
+  flex: 1;
+  margin: 0;
+  font-weight: 600;
+  font-size: 1.1rem;
+}
+
+.form-section-title-with-actions .btn-remove {
+  flex-shrink: 0;
+}
+
 .form-group { margin-bottom: 14px; }
 
 .form-label {
