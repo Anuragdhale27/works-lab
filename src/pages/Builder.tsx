@@ -213,6 +213,96 @@ export function Builder() {
     });
   }
 
+  function moveEntry<K extends 'experience' | 'education' | 'projects' | 'certifications' | 'languages'>(
+    key: K,
+    index: number,
+    direction: 'up' | 'down',
+  ) {
+    setData((d) => {
+      const list = [...(d[key] as unknown[])];
+      const newIndex = direction === 'up' ? index - 1 : index + 1;
+      if (newIndex < 0 || newIndex >= list.length) return d;
+      [list[index], list[newIndex]] = [list[newIndex], list[index]];
+      return { ...d, [key]: list } as ResumeData;
+    });
+  }
+
+  function handleAddBullet(
+    sectionKey: 'experience' | 'education' | 'projects',
+    entryIndex: number,
+    textareaId: string,
+  ) {
+    const textarea = document.getElementById(textareaId) as HTMLTextAreaElement | null;
+    if (!textarea) return;
+    const start = textarea.selectionStart;
+    const text = textarea.value;
+    const beforeCursor = text.substring(0, start);
+    const lastNewline = beforeCursor.lastIndexOf('\n');
+    const isAtLineStart = lastNewline === -1 || beforeCursor.substring(lastNewline + 1).trim() === '';
+
+    if (isAtLineStart && lastNewline !== -1) {
+      // Insert bullet at start of current line (before cursor)
+      const lineStart = lastNewline + 1;
+      const newValue = text.substring(0, lineStart) + '• ' + text.substring(lineStart);
+      updateEntry(sectionKey, entryIndex, 'description', newValue);
+      // Move cursor after the bullet
+      setTimeout(() => {
+        const ta = document.getElementById(textareaId) as HTMLTextAreaElement;
+        if (ta) {
+          ta.selectionStart = ta.selectionEnd = lineStart + 2;
+        }
+      });
+    } else {
+      // Append bullet on new line
+      const newValue = text + (text && !text.endsWith('\n') ? '\n' : '') + '• ';
+      updateEntry(sectionKey, entryIndex, 'description', newValue);
+      setTimeout(() => {
+        const ta = document.getElementById(textareaId) as HTMLTextAreaElement;
+        if (ta) {
+          ta.selectionStart = ta.selectionEnd = newValue.length;
+          ta.focus();
+        }
+      });
+    }
+  }
+
+  function handleBulletKeydown(
+    e: React.KeyboardEvent<HTMLTextAreaElement>,
+    sectionKey: 'experience' | 'education' | 'projects',
+    entryIndex: number,
+  ) {
+    if (e.key !== 'Enter') return;
+    const textarea = e.currentTarget;
+    const start = textarea.selectionStart;
+    const text = textarea.value;
+    const beforeCursor = text.substring(0, start);
+    const lineStart = beforeCursor.lastIndexOf('\n') + 1;
+    const currentLine = text.substring(lineStart, start);
+    const isLineStartWithBullet = /^[•\-*–]\s/.test(currentLine.trim());
+    const isOnlyBullet = /^[•\-*–]\s*$/.test(currentLine);
+
+    if (isOnlyBullet) {
+      // Remove the bullet marker and continue on new line
+      e.preventDefault();
+      const newText = text.substring(0, lineStart) + '\n' + text.substring(start);
+      updateEntry(sectionKey, entryIndex, 'description', newText);
+      setTimeout(() => {
+        textarea.value = newText;
+        textarea.selectionStart = textarea.selectionEnd = lineStart + 1;
+      });
+    } else if (isLineStartWithBullet) {
+      // Continue with a new bullet on next line
+      e.preventDefault();
+      const afterCursor = text.substring(start);
+      const newText = text.substring(0, start) + '\n• ' + afterCursor;
+      updateEntry(sectionKey, entryIndex, 'description', newText);
+      setTimeout(() => {
+        textarea.value = newText;
+        textarea.selectionStart = textarea.selectionEnd = start + 3;
+      });
+    }
+  }
+
   function loadExample() {
     if (!isResumeDataEmpty(data)) {
       const ok = window.confirm('This will replace your current entries with the example resume. Continue?');
@@ -537,7 +627,29 @@ export function Builder() {
                   <div className="entry-card" key={i}>
                     <div className="entry-card-header">
                       <div className="entry-card-title">Experience {i + 1}</div>
-                      <button className="btn-remove" onClick={() => removeEntry('experience', i)}>Remove</button>
+                      <div className="entry-card-actions">
+                        {i > 0 && (
+                          <button
+                            className="btn-move"
+                            onClick={() => moveEntry('experience', i, 'up')}
+                            aria-label="Move up"
+                            title="Move up"
+                          >
+                            ↑
+                          </button>
+                        )}
+                        {i < data.experience.length - 1 && (
+                          <button
+                            className="btn-move"
+                            onClick={() => moveEntry('experience', i, 'down')}
+                            aria-label="Move down"
+                            title="Move down"
+                          >
+                            ↓
+                          </button>
+                        )}
+                        <button className="btn-remove" onClick={() => removeEntry('experience', i)}>Remove</button>
+                      </div>
                     </div>
                     <div className="form-row">
                       <div className="form-group">
@@ -582,12 +694,46 @@ export function Builder() {
                       </div>
                       <div className="form-group">
                         <label className="form-label">End Date</label>
-                        <input className="form-input" placeholder="Present" value={exp.end} onChange={(e) => updateEntry('experience', i, 'end', e.target.value)} />
+                        <input
+                          className="form-input"
+                          placeholder="Present"
+                          value={exp.end}
+                          onChange={(e) => updateEntry('experience', i, 'end', e.target.value)}
+                          disabled={exp.end === 'Present'}
+                        />
+                        <label className="form-checkbox">
+                          <input
+                            type="checkbox"
+                            checked={exp.end === 'Present'}
+                            onChange={(e) => updateEntry('experience', i, 'end', e.target.checked ? 'Present' : '')}
+                            aria-label="Currently working here"
+                          />
+                          Currently working here
+                        </label>
                       </div>
                     </div>
                     <div className="form-group">
                       <label className="form-label">Responsibilities</label>
-                      <textarea className="form-textarea" placeholder="Describe your role and achievements..." value={exp.description} onChange={(e) => updateEntry('experience', i, 'description', e.target.value)} />
+                      <p className="field-hint">Start lines with • to create bullet points. Press Enter to continue the list.</p>
+                      <div className="textarea-wrapper">
+                        <button
+                          type="button"
+                          className="btn-add-bullet"
+                          onClick={() => handleAddBullet('experience', i, `exp-desc-${i}`)}
+                          aria-label="Add bullet point"
+                          title="Add bullet point"
+                        >
+                          • Add bullet
+                        </button>
+                        <textarea
+                          id={`exp-desc-${i}`}
+                          className="form-textarea"
+                          placeholder="• Start lines with a bullet to create a list&#10;• Or write a paragraph normally&#10;• Mixing bullets and text is fine"
+                          value={exp.description}
+                          onChange={(e) => updateEntry('experience', i, 'description', e.target.value)}
+                          onKeyDown={(e) => handleBulletKeydown(e, 'experience', i)}
+                        />
+                      </div>
                     </div>
                   </div>
                   );
@@ -609,7 +755,29 @@ export function Builder() {
                   <div className="entry-card" key={i}>
                     <div className="entry-card-header">
                       <div className="entry-card-title">Education {i + 1}</div>
-                      <button className="btn-remove" onClick={() => removeEntry('education', i)}>Remove</button>
+                      <div className="entry-card-actions">
+                        {i > 0 && (
+                          <button
+                            className="btn-move"
+                            onClick={() => moveEntry('education', i, 'up')}
+                            aria-label="Move up"
+                            title="Move up"
+                          >
+                            ↑
+                          </button>
+                        )}
+                        {i < data.education.length - 1 && (
+                          <button
+                            className="btn-move"
+                            onClick={() => moveEntry('education', i, 'down')}
+                            aria-label="Move down"
+                            title="Move down"
+                          >
+                            ↓
+                          </button>
+                        )}
+                        <button className="btn-remove" onClick={() => removeEntry('education', i)}>Remove</button>
+                      </div>
                     </div>
                     <div className="form-group">
                       <label className="form-label">Degree / Course</label>
@@ -632,7 +800,22 @@ export function Builder() {
                       </div>
                       <div className="form-group">
                         <label className="form-label">End Year</label>
-                        <input className="form-input" placeholder="2023" value={edu.end} onChange={(e) => updateEntry('education', i, 'end', e.target.value)} />
+                        <input
+                          className="form-input"
+                          placeholder="2023"
+                          value={edu.end}
+                          onChange={(e) => updateEntry('education', i, 'end', e.target.value)}
+                          disabled={edu.end === 'Present'}
+                        />
+                        <label className="form-checkbox">
+                          <input
+                            type="checkbox"
+                            checked={edu.end === 'Present'}
+                            onChange={(e) => updateEntry('education', i, 'end', e.target.checked ? 'Present' : '')}
+                            aria-label="Currently studying"
+                          />
+                          Currently studying
+                        </label>
                       </div>
                     </div>
                     <div className="form-group">
@@ -695,7 +878,29 @@ export function Builder() {
                   <div className="entry-card" key={i}>
                     <div className="entry-card-header">
                       <div className="entry-card-title">Project {i + 1}</div>
-                      <button className="btn-remove" onClick={() => removeEntry('projects', i)}>Remove</button>
+                      <div className="entry-card-actions">
+                        {i > 0 && (
+                          <button
+                            className="btn-move"
+                            onClick={() => moveEntry('projects', i, 'up')}
+                            aria-label="Move up"
+                            title="Move up"
+                          >
+                            ↑
+                          </button>
+                        )}
+                        {i < data.projects.length - 1 && (
+                          <button
+                            className="btn-move"
+                            onClick={() => moveEntry('projects', i, 'down')}
+                            aria-label="Move down"
+                            title="Move down"
+                          >
+                            ↓
+                          </button>
+                        )}
+                        <button className="btn-remove" onClick={() => removeEntry('projects', i)}>Remove</button>
+                      </div>
                     </div>
                     <div className="form-group">
                       <label className="form-label">Project Name</label>
@@ -711,7 +916,26 @@ export function Builder() {
                     </div>
                     <div className="form-group">
                       <label className="form-label">Description</label>
-                      <textarea className="form-textarea" placeholder="What you built and what it achieved..." value={pr.description} onChange={(e) => updateEntry('projects', i, 'description', e.target.value)} />
+                      <p className="field-hint">Start lines with • to create bullet points. Press Enter to continue the list.</p>
+                      <div className="textarea-wrapper">
+                        <button
+                          type="button"
+                          className="btn-add-bullet"
+                          onClick={() => handleAddBullet('projects', i, `pr-desc-${i}`)}
+                          aria-label="Add bullet point"
+                          title="Add bullet point"
+                        >
+                          • Add bullet
+                        </button>
+                        <textarea
+                          id={`pr-desc-${i}`}
+                          className="form-textarea"
+                          placeholder="• Start lines with a bullet to create a list&#10;• Or write a paragraph normally&#10;• Mixing bullets and text is fine"
+                          value={pr.description}
+                          onChange={(e) => updateEntry('projects', i, 'description', e.target.value)}
+                          onKeyDown={(e) => handleBulletKeydown(e, 'projects', i)}
+                        />
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -730,7 +954,29 @@ export function Builder() {
                   <div className="entry-card" key={i}>
                     <div className="entry-card-header">
                       <div className="entry-card-title">Certification {i + 1}</div>
-                      <button className="btn-remove" onClick={() => removeEntry('certifications', i)}>Remove</button>
+                      <div className="entry-card-actions">
+                        {i > 0 && (
+                          <button
+                            className="btn-move"
+                            onClick={() => moveEntry('certifications', i, 'up')}
+                            aria-label="Move up"
+                            title="Move up"
+                          >
+                            ↑
+                          </button>
+                        )}
+                        {i < data.certifications.length - 1 && (
+                          <button
+                            className="btn-move"
+                            onClick={() => moveEntry('certifications', i, 'down')}
+                            aria-label="Move down"
+                            title="Move down"
+                          >
+                            ↓
+                          </button>
+                        )}
+                        <button className="btn-remove" onClick={() => removeEntry('certifications', i)}>Remove</button>
+                      </div>
                     </div>
                     <div className="form-row">
                       <div className="form-group">
@@ -769,7 +1015,29 @@ export function Builder() {
                   <div className="entry-card" key={i}>
                     <div className="entry-card-header">
                       <div className="entry-card-title">Language {i + 1}</div>
-                      <button className="btn-remove" onClick={() => removeEntry('languages', i)}>Remove</button>
+                      <div className="entry-card-actions">
+                        {i > 0 && (
+                          <button
+                            className="btn-move"
+                            onClick={() => moveEntry('languages', i, 'up')}
+                            aria-label="Move up"
+                            title="Move up"
+                          >
+                            ↑
+                          </button>
+                        )}
+                        {i < data.languages.length - 1 && (
+                          <button
+                            className="btn-move"
+                            onClick={() => moveEntry('languages', i, 'down')}
+                            aria-label="Move down"
+                            title="Move down"
+                          >
+                            ↓
+                          </button>
+                        )}
+                        <button className="btn-remove" onClick={() => removeEntry('languages', i)}>Remove</button>
+                      </div>
                     </div>
                     <div className="form-row">
                       <div className="form-group">

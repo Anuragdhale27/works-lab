@@ -1,5 +1,5 @@
 import type { ResumeData } from '../types/resume';
-import { multiline } from '../lib/multiline';
+import { Description } from './Description';
 
 export function MinimalTemplate({ data }: { data: ResumeData }) {
   const p = data.personal;
@@ -20,7 +20,7 @@ export function MinimalTemplate({ data }: { data: ResumeData }) {
       {data.summary && (
         <div className="rmin-section">
           <div className="rmin-section-title">Professional Summary</div>
-          <div className="rmin-desc">{multiline(data.summary)}</div>
+          <div className="rmin-desc"><Description text={data.summary} /></div>
         </div>
       )}
 
@@ -39,7 +39,7 @@ export function MinimalTemplate({ data }: { data: ResumeData }) {
                 {exp.company}
                 {exp.location ? ` · ${exp.location}` : ''}
               </div>
-              <div className="rmin-desc">{multiline(exp.description)}</div>
+              <div className="rmin-desc"><Description text={exp.description} /></div>
             </div>
           ))}
         </div>
@@ -79,7 +79,7 @@ export function MinimalTemplate({ data }: { data: ResumeData }) {
             <div className="rmin-item" key={i}>
               <div className="rmin-item-title">{pr.name || 'Project'}</div>
               {pr.tech && <div className="rmin-item-sub">{pr.tech}</div>}
-              <div className="rmin-desc">{multiline(pr.description)}</div>
+              <div className="rmin-desc"><Description text={pr.description} /></div>
             </div>
           ))}
         </div>

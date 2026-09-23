@@ -866,6 +866,43 @@ footer {
 
 .form-textarea { resize: vertical; min-height: 90px; }
 
+.form-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.85rem;
+  color: var(--gray-700);
+  margin-top: 6px;
+  cursor: pointer;
+}
+
+.form-checkbox input[type="checkbox"] {
+  cursor: pointer;
+}
+
+.textarea-wrapper {
+  position: relative;
+}
+
+.btn-add-bullet {
+  display: block;
+  background: none;
+  border: 1px solid var(--gray-300);
+  color: var(--gray-600);
+  cursor: pointer;
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 3px;
+  margin-bottom: 6px;
+  transition: all var(--transition);
+}
+
+.btn-add-bullet:hover {
+  background: var(--gray-100);
+  border-color: var(--gray-400);
+}
+
 .form-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -888,6 +925,26 @@ footer {
 }
 
 .entry-card-title { font-weight: 600; font-size: 0.85rem; }
+
+.entry-card-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.btn-move {
+  background: none;
+  border: none;
+  color: #6b7280;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 600;
+  padding: 3px 6px;
+  border-radius: 4px;
+  transition: background var(--transition);
+}
+
+.btn-move:hover { background: #f3f4f6; }
 
 .btn-remove {
   background: none;
@@ -1216,6 +1273,10 @@ footer {
 .rmod-exp-date { font-size: var(--r-text-sm); color: var(--r-ink-soft); white-space: nowrap; }
 .rmod-exp-company { font-size: var(--r-text-sm); color: var(--r-ink-soft); font-weight: 600; margin-bottom: var(--r-sp-1); }
 .rmod-exp-desc { font-size: var(--r-text); color: var(--r-ink); line-height: var(--r-lh); }
+.rmod-exp-desc ul { list-style: none; margin: 0; padding: 0 0 0 1.5em; }
+.rmod-exp-desc ul li { margin: 2px 0; padding-left: 0.4em; text-indent: -0.4em; }
+.rmod-exp-desc ul li:before { content: '• '; margin-right: 0.4em; }
+.rmod-exp-desc p { margin: var(--r-sp-1) 0; }
 
 .rmod-skills { display: flex; flex-wrap: wrap; gap: var(--r-sp-2); }
 .rmod-skill { background: #eff6ff; color: #2563eb; border-radius: 3px; padding: 4px 10px; font-size: var(--r-text-sm); font-weight: 600; }
@@ -1265,6 +1326,10 @@ footer {
 .rcls-exp-date { font-size: var(--r-text-sm); color: var(--r-ink-soft); white-space: nowrap; }
 .rcls-exp-sub { font-size: var(--r-text-sm); color: var(--r-ink-soft); font-style: italic; margin-bottom: var(--r-sp-1); }
 .rcls-desc { font-size: var(--r-text); color: var(--r-ink); line-height: var(--r-lh); }
+.rcls-desc ul { list-style: none; margin: 0; padding: 0 0 0 1.5em; }
+.rcls-desc ul li { margin: 2px 0; padding-left: 0.4em; text-indent: -0.4em; }
+.rcls-desc ul li:before { content: '• '; margin-right: 0.4em; }
+.rcls-desc p { margin: var(--r-sp-1) 0; }
 .rcls-skills-list { font-size: var(--r-text); color: var(--r-ink); }
 
 /* Minimal — single-column, whitespace-forward, quietest of the four. Typography
@@ -1301,6 +1366,10 @@ footer {
 .rmin-item-date { font-size: var(--r-text-sm); color: var(--r-ink-soft); white-space: nowrap; }
 .rmin-item-sub { font-size: var(--r-text-sm); color: var(--r-ink-soft); margin-bottom: var(--r-sp-1); }
 .rmin-desc { font-size: var(--r-text); color: var(--r-ink); line-height: var(--r-lh); }
+.rmin-desc ul { list-style: none; margin: 0; padding: 0 0 0 1.5em; }
+.rmin-desc ul li { margin: 2px 0; padding-left: 0.4em; text-indent: -0.4em; }
+.rmin-desc ul li:before { content: '• '; margin-right: 0.4em; }
+.rmin-desc p { margin: var(--r-sp-1) 0; }
 
 /* Executive — light, premium, restrained. Seniority comes from typographic
    confidence (Playfair Display name, generous whitespace) and a single
@@ -1329,6 +1398,10 @@ footer {
 .rexe-exp-title { font-weight: 700; font-size: var(--r-title); line-height: var(--r-lh-tight); color: var(--r-ink); }
 .rexe-exp-sub { font-size: var(--r-text-sm); color: var(--r-ink-soft); margin-bottom: var(--r-sp-1); }
 .rexe-desc { font-size: var(--r-text); color: var(--r-ink); line-height: var(--r-lh); }
+.rexe-desc ul { list-style: none; margin: 0; padding: 0 0 0 1.5em; }
+.rexe-desc ul li { margin: 2px 0; padding-left: 0.4em; text-indent: -0.4em; }
+.rexe-desc ul li:before { content: '• '; margin-right: 0.4em; }
+.rexe-desc p { margin: var(--r-sp-1) 0; }
 .rexe-skills { display: flex; flex-wrap: wrap; gap: var(--r-sp-2); }
 .rexe-skill { border: 1px solid #c7ccd1; color: var(--r-ink); border-radius: 2px; padding: 3px 10px; font-size: var(--r-text-sm); font-weight: 500; }
 
