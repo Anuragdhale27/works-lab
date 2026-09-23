@@ -6,12 +6,12 @@ import { parseDescription } from './parseDescription';
  * Called only when the user clicks Export Word.
  */
 async function getDocxModule() {
-  const { Document, Packer, Paragraph, TextRun, AlignmentType, convertInchesToTwip } = await import('docx');
-  return { Document, Packer, Paragraph, TextRun, AlignmentType, convertInchesToTwip };
+  const { Document, Packer, Paragraph, TextRun, HeadingLevel, AlignmentType, convertInchesToTwip } = await import('docx');
+  return { Document, Packer, Paragraph, TextRun, HeadingLevel, AlignmentType, convertInchesToTwip };
 }
 
 export async function exportResumeToDocx(data: ResumeData): Promise<void> {
-  const { Document, Packer, Paragraph, TextRun, AlignmentType, convertInchesToTwip } = await getDocxModule();
+  const { Document, Packer, Paragraph, TextRun, HeadingLevel, AlignmentType, convertInchesToTwip } = await getDocxModule();
 
   const p = data.personal;
   // Convert hex color to RGB decimal
@@ -19,13 +19,13 @@ export async function exportResumeToDocx(data: ResumeData): Promise<void> {
   const accentRGB = accentHex.slice(1);
   const sections: InstanceType<typeof Paragraph>[] = [];
 
-  // Name (large)
+  // Name (Heading1)
   sections.push(
     new Paragraph({
+      heading: HeadingLevel.HEADING_1,
       children: [
         new TextRun({
           text: p.name || 'Your Name',
-          size: 32, // 16pt in half-points
           bold: true,
         }),
       ],
@@ -61,6 +61,7 @@ export async function exportResumeToDocx(data: ResumeData): Promise<void> {
   if (data.summary) {
     sections.push(
       new Paragraph({
+        heading: HeadingLevel.HEADING_2,
         children: [
           new TextRun({
             text: 'Professional Summary',
@@ -83,6 +84,7 @@ export async function exportResumeToDocx(data: ResumeData): Promise<void> {
   if (data.experience.length > 0) {
     sections.push(
       new Paragraph({
+        heading: HeadingLevel.HEADING_2,
         children: [
           new TextRun({
             text: 'Work Experience',
@@ -150,6 +152,7 @@ export async function exportResumeToDocx(data: ResumeData): Promise<void> {
   if (data.projects.length > 0) {
     sections.push(
       new Paragraph({
+        heading: HeadingLevel.HEADING_2,
         children: [
           new TextRun({
             text: 'Projects',
@@ -217,6 +220,7 @@ export async function exportResumeToDocx(data: ResumeData): Promise<void> {
   if (data.education.length > 0) {
     sections.push(
       new Paragraph({
+        heading: HeadingLevel.HEADING_2,
         children: [
           new TextRun({
             text: 'Education',
@@ -267,6 +271,7 @@ export async function exportResumeToDocx(data: ResumeData): Promise<void> {
   if (data.skills.length > 0) {
     sections.push(
       new Paragraph({
+        heading: HeadingLevel.HEADING_2,
         children: [
           new TextRun({
             text: 'Skills',
@@ -289,6 +294,7 @@ export async function exportResumeToDocx(data: ResumeData): Promise<void> {
   if (data.certifications.length > 0) {
     sections.push(
       new Paragraph({
+        heading: HeadingLevel.HEADING_2,
         children: [
           new TextRun({
             text: 'Certifications',
@@ -333,6 +339,7 @@ export async function exportResumeToDocx(data: ResumeData): Promise<void> {
   if (data.awards.length > 0) {
     sections.push(
       new Paragraph({
+        heading: HeadingLevel.HEADING_2,
         children: [
           new TextRun({
             text: 'Awards & Achievements',
@@ -385,6 +392,7 @@ export async function exportResumeToDocx(data: ResumeData): Promise<void> {
   if (data.languages.length > 0) {
     sections.push(
       new Paragraph({
+        heading: HeadingLevel.HEADING_2,
         children: [
           new TextRun({
             text: 'Languages',
@@ -406,8 +414,42 @@ export async function exportResumeToDocx(data: ResumeData): Promise<void> {
     }
   }
 
-  // Create document
+  // Create document with paragraph styles
   const doc = new Document({
+    styles: {
+      paragraphStyles: [
+        {
+          id: 'Heading1',
+          name: 'Heading 1',
+          basedOn: 'Normal',
+          next: 'Normal',
+          run: {
+            font: 'Calibri',
+            size: 28, // 14pt in half-points
+            bold: true,
+            color: accentRGB,
+          },
+          paragraph: {
+            spacing: { line: 240, lineRule: 'auto' },
+          },
+        },
+        {
+          id: 'Heading2',
+          name: 'Heading 2',
+          basedOn: 'Normal',
+          next: 'Normal',
+          run: {
+            font: 'Calibri',
+            size: 24, // 12pt in half-points
+            bold: true,
+            color: accentRGB,
+          },
+          paragraph: {
+            spacing: { line: 240, lineRule: 'auto' },
+          },
+        },
+      ],
+    },
     sections: [
       {
         properties: {

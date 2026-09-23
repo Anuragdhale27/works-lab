@@ -1231,7 +1231,7 @@ footer {
 }
 
 .rmod-header {
-  background: #1e3a5f;
+  background: var(--r-accent, #1e3a5f);
   color: #fff;
   padding: var(--r-sp-6) var(--r-margin);
 }
@@ -1419,7 +1419,7 @@ footer {
   padding: var(--r-sp-6) var(--r-margin);
 }
 
-.rsb-header { grid-area: header; display: flex; align-items: center; justify-content: space-between; gap: var(--r-sp-4); margin-bottom: var(--r-sp-2); border-bottom: 2px solid #164e63; padding-bottom: var(--r-sp-4); }
+.rsb-header { grid-area: header; display: flex; align-items: center; justify-content: space-between; gap: var(--r-sp-4); margin-bottom: var(--r-sp-2); border-bottom: 2px solid var(--r-accent, #164e63); padding-bottom: var(--r-sp-4); }
 .rsb-head-text { flex: 1; min-width: 0; overflow-wrap: anywhere; }
 .rsb-name { font-size: var(--r-name); font-weight: 800; letter-spacing: -0.02em; line-height: var(--r-lh-tight); margin-bottom: var(--r-sp-1); }
 .rsb-title { font-size: var(--r-title); font-weight: 500; color: var(--r-ink-soft); margin-bottom: var(--r-sp-1); }
@@ -1832,5 +1832,5 @@ main:focus { outline: none; }
 .rmod-head-text, .rexe-head-text, .rmin-head-text { flex: 1; min-width: 0; overflow-wrap: anywhere; }
 .rmod-photo, .rexe-photo, .rmin-photo { width: 84px; height: 84px; object-fit: cover; flex-shrink: 0; break-inside: avoid; }
 .rmod-photo { border-radius: 50%; border: 3px solid rgba(255,255,255,0.85); }
-.rexe-photo { border: 2px solid #1c2b3a; }
+.rexe-photo { border: 2px solid var(--r-accent, #1c2b3a); }
 .rmin-photo { border-radius: 50%; border: 1px solid #ddd; }

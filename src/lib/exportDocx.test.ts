@@ -17,7 +17,7 @@ describe('exportDocx', () => {
     vi.clearAllMocks();
   });
 
-  it('should generate a .docx file with sample data', async () => {
+  it('should generate a .docx file with real heading styles (Heading1/Heading2)', async () => {
     const sampleData: ResumeData = {
       personal: {
         name: 'John Doe',
