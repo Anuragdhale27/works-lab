@@ -1273,9 +1273,8 @@ footer {
 .rmod-exp-date { font-size: var(--r-text-sm); color: var(--r-ink-soft); white-space: nowrap; }
 .rmod-exp-company { font-size: var(--r-text-sm); color: var(--r-ink-soft); font-weight: 600; margin-bottom: var(--r-sp-1); }
 .rmod-exp-desc { font-size: var(--r-text); color: var(--r-ink); line-height: var(--r-lh); }
-.rmod-exp-desc ul { list-style: none; margin: 0; padding: 0 0 0 1.5em; }
-.rmod-exp-desc ul li { margin: 2px 0; padding-left: 0.4em; text-indent: -0.4em; }
-.rmod-exp-desc ul li:before { content: '• '; margin-right: 0.4em; }
+.rmod-exp-desc ul { list-style: disc outside; margin: 2px 0; padding-left: 1.15em; }
+.rmod-exp-desc ul li { margin: 1px 0; padding-left: 0.15em; }
 .rmod-exp-desc p { margin: var(--r-sp-1) 0; }
 
 .rmod-skills { display: flex; flex-wrap: wrap; gap: var(--r-sp-2); }
@@ -1326,9 +1325,8 @@ footer {
 .rcls-exp-date { font-size: var(--r-text-sm); color: var(--r-ink-soft); white-space: nowrap; }
 .rcls-exp-sub { font-size: var(--r-text-sm); color: var(--r-ink-soft); font-style: italic; margin-bottom: var(--r-sp-1); }
 .rcls-desc { font-size: var(--r-text); color: var(--r-ink); line-height: var(--r-lh); }
-.rcls-desc ul { list-style: none; margin: 0; padding: 0 0 0 1.5em; }
-.rcls-desc ul li { margin: 2px 0; padding-left: 0.4em; text-indent: -0.4em; }
-.rcls-desc ul li:before { content: '• '; margin-right: 0.4em; }
+.rcls-desc ul { list-style: disc outside; margin: 2px 0; padding-left: 1.15em; }
+.rcls-desc ul li { margin: 1px 0; padding-left: 0.15em; }
 .rcls-desc p { margin: var(--r-sp-1) 0; }
 .rcls-skills-list { font-size: var(--r-text); color: var(--r-ink); }
 
@@ -1366,9 +1364,8 @@ footer {
 .rmin-item-date { font-size: var(--r-text-sm); color: var(--r-ink-soft); white-space: nowrap; }
 .rmin-item-sub { font-size: var(--r-text-sm); color: var(--r-ink-soft); margin-bottom: var(--r-sp-1); }
 .rmin-desc { font-size: var(--r-text); color: var(--r-ink); line-height: var(--r-lh); }
-.rmin-desc ul { list-style: none; margin: 0; padding: 0 0 0 1.5em; }
-.rmin-desc ul li { margin: 2px 0; padding-left: 0.4em; text-indent: -0.4em; }
-.rmin-desc ul li:before { content: '• '; margin-right: 0.4em; }
+.rmin-desc ul { list-style: disc outside; margin: 2px 0; padding-left: 1.15em; }
+.rmin-desc ul li { margin: 1px 0; padding-left: 0.15em; }
 .rmin-desc p { margin: var(--r-sp-1) 0; }
 
 /* Executive — light, premium, restrained. Seniority comes from typographic
@@ -1398,9 +1395,8 @@ footer {
 .rexe-exp-title { font-weight: 700; font-size: var(--r-title); line-height: var(--r-lh-tight); color: var(--r-ink); }
 .rexe-exp-sub { font-size: var(--r-text-sm); color: var(--r-ink-soft); margin-bottom: var(--r-sp-1); }
 .rexe-desc { font-size: var(--r-text); color: var(--r-ink); line-height: var(--r-lh); }
-.rexe-desc ul { list-style: none; margin: 0; padding: 0 0 0 1.5em; }
-.rexe-desc ul li { margin: 2px 0; padding-left: 0.4em; text-indent: -0.4em; }
-.rexe-desc ul li:before { content: '• '; margin-right: 0.4em; }
+.rexe-desc ul { list-style: disc outside; margin: 2px 0; padding-left: 1.15em; }
+.rexe-desc ul li { margin: 1px 0; padding-left: 0.15em; }
 .rexe-desc p { margin: var(--r-sp-1) 0; }
 .rexe-skills { display: flex; flex-wrap: wrap; gap: var(--r-sp-2); }
 .rexe-skill { border: 1px solid #c7ccd1; color: var(--r-ink); border-radius: 2px; padding: 3px 10px; font-size: var(--r-text-sm); font-weight: 500; }
