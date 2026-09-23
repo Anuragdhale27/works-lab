@@ -14,6 +14,8 @@ import type {
 import { emptyResumeData, type TemplateKey } from '../types/resume';
 import { TEMPLATES, isTemplateKey } from '../templates';
 import { loadResumeData, saveResumeData, validateResumeData } from '../lib/storage';
+import { duplicateEntry } from '../lib/duplication';
+import { useHistoryState } from '../hooks/useHistoryState';
 import { SkipLink } from '../components/SkipLink';
 import { useToast } from '../components/ToastProvider';
 import { SectionNav } from '../components/SectionNav';
@@ -33,11 +35,14 @@ export function Builder() {
   const [searchParams] = useSearchParams();
   const { showToast } = useToast();
 
-  const [data, setData] = useState<ResumeData>(emptyResumeData);
+  const [data, setDataRaw, canUndo, canRedo, undo, redo] = useHistoryState<ResumeData>(emptyResumeData);
   const [template, setTemplate] = useState<TemplateKey>(() => {
     const t = searchParams.get('template');
     return isTemplateKey(t ?? undefined) ? (t as TemplateKey) : 'modern';
   });
+
+  // Wrapper around setDataRaw to maintain the signature and type compatibility
+  const setData = setDataRaw;
   const previewRef = useRef<HTMLDivElement>(null);
   const wrapperRef = useRef<HTMLDivElement>(null);
   const formPanelRef = useRef<HTMLDivElement>(null);
@@ -78,10 +83,11 @@ export function Builder() {
   const saveTimeoutRef = useRef<number | undefined>(undefined);
   const isFirstDataEffect = useRef(true);
 
-  // Load persisted data on mount only.
+  // Load persisted data on mount only. Pass shouldStartNewEntry=false to avoid creating
+  // a history entry for the initial load — it's not a user action.
   useEffect(() => {
-    setData(loadResumeData());
-  }, []);
+    setData(loadResumeData(), false);
+  }, [setData]);
 
   // Debounced persist on every change, with an honest saving/saved/error state.
   useEffect(() => {
@@ -162,6 +168,51 @@ export function Builder() {
     }
   }, [data]);
 
+  // Keyboard shortcuts for undo/redo
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      const isMac = /Mac|iPhone|iPad|iPod/.test(navigator.platform);
+      const modifier = isMac ? e.metaKey : e.ctrlKey;
+
+      // Check if focus is on an input, textarea, select, or contenteditable
+      const target = e.target as HTMLElement | null;
+      const isFormElement =
+        target instanceof HTMLInputElement ||
+        target instanceof HTMLTextAreaElement ||
+        target instanceof HTMLSelectElement ||
+        target?.contentEditable === 'true';
+
+      if (isFormElement) {
+        // Let the browser's native undo/redo handle it within the text input
+        return;
+      }
+
+      // Undo: Ctrl+Z (Windows/Linux) or Cmd+Z (Mac)
+      if (modifier && e.key.toLowerCase() === 'z' && !e.shiftKey) {
+        e.preventDefault();
+        if (canUndo) undo();
+        return;
+      }
+
+      // Redo: Ctrl+Shift+Z (Windows/Linux) or Cmd+Shift+Z (Mac)
+      if (modifier && e.key.toLowerCase() === 'z' && e.shiftKey) {
+        e.preventDefault();
+        if (canRedo) redo();
+        return;
+      }
+
+      // Redo: Ctrl+Y (Windows/Linux) — Mac users typically don't use this, but support it anyway
+      if (modifier && e.key.toLowerCase() === 'y' && !e.shiftKey) {
+        e.preventDefault();
+        if (canRedo) redo();
+        return;
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [canUndo, canRedo, undo, redo]);
+
   function updatePersonal(field: keyof ResumeData['personal'], value: string) {
     setData((d) => ({ ...d, personal: { ...d.personal, [field]: value } }));
   }
@@ -203,7 +254,8 @@ export function Builder() {
     key: K,
     entry: ResumeData[K][number],
   ) {
-    setData((d) => ({ ...d, [key]: [...d[key], entry] } as ResumeData));
+    // Structural operation: always create new history entry
+    setData((d) => ({ ...d, [key]: [...d[key], entry] } as ResumeData), true);
   }
 
   function updateEntry<K extends 'experience' | 'education' | 'projects' | 'certifications' | 'languages' | 'awards'>(
@@ -223,11 +275,15 @@ export function Builder() {
     key: K,
     index: number,
   ) {
-    setData((d) => {
-      const list = [...(d[key] as unknown[])];
-      list.splice(index, 1);
-      return { ...d, [key]: list } as ResumeData;
-    });
+    // Structural operation: always create new history entry
+    setData(
+      (d) => {
+        const list = [...(d[key] as unknown[])];
+        list.splice(index, 1);
+        return { ...d, [key]: list } as ResumeData;
+      },
+      true
+    );
   }
 
   function moveEntry<K extends 'experience' | 'education' | 'projects' | 'certifications' | 'languages' | 'awards'>(
@@ -235,26 +291,25 @@ export function Builder() {
     index: number,
     direction: 'up' | 'down',
   ) {
-    setData((d) => {
-      const list = [...(d[key] as unknown[])];
-      const newIndex = direction === 'up' ? index - 1 : index + 1;
-      if (newIndex < 0 || newIndex >= list.length) return d;
-      [list[index], list[newIndex]] = [list[newIndex], list[index]];
-      return { ...d, [key]: list } as ResumeData;
-    });
+    // Structural operation: always create new history entry
+    setData(
+      (d) => {
+        const list = [...(d[key] as unknown[])];
+        const newIndex = direction === 'up' ? index - 1 : index + 1;
+        if (newIndex < 0 || newIndex >= list.length) return d;
+        [list[index], list[newIndex]] = [list[newIndex], list[index]];
+        return { ...d, [key]: list } as ResumeData;
+      },
+      true
+    );
   }
 
-  function duplicateEntry<K extends 'experience' | 'education' | 'projects' | 'certifications' | 'languages' | 'awards'>(
+  function handleDuplicateEntry<K extends 'experience' | 'education' | 'projects' | 'certifications' | 'languages' | 'awards'>(
     key: K,
     index: number,
   ) {
-    setData((d) => {
-      const list = [...(d[key] as unknown[])];
-      if (index < 0 || index >= list.length) return d;
-      const copy = structuredClone(list[index]);
-      list.splice(index + 1, 0, copy);
-      return { ...d, [key]: list } as ResumeData;
-    });
+    // Structural operation: always create new history entry
+    setData((d) => duplicateEntry(d, key, index), true);
   }
 
   function handleAddBullet(
@@ -324,16 +379,16 @@ export function Builder() {
       const ok = window.confirm('This will replace your current entries with the example resume. Continue?');
       if (!ok) return;
     }
-    setData(sampleResumeData);
+    setData(sampleResumeData, true); // Force new history entry so user can undo
     showToast('Example resume loaded — edit it to make it yours.');
   }
 
   function clearEverything() {
-    const ok = window.confirm('This will clear everything you’ve entered. Continue?');
+    const ok = window.confirm("This will clear everything you’ve entered. Continue?");
     if (!ok) return;
-    setData(emptyResumeData);
+    setData(emptyResumeData, true); // Force new history entry so user can undo
     setTouched(new Set());
-    showToast('Form cleared.');
+    showToast("Form cleared.");
   }
 
   function exportData() {
@@ -374,7 +429,7 @@ export function Builder() {
         const ok = window.confirm('This will replace your current entries with the imported resume. Continue?');
         if (!ok) return;
       }
-      setData(validated);
+      setData(validated, true); // Force new history entry so user can undo
       setTouched(new Set());
       showToast('Resume imported.');
     };
@@ -431,6 +486,26 @@ export function Builder() {
                 <span className="builder-nav-template" style={{ fontSize: '0.82rem', color: 'var(--gray-600)' }}>
                   Template: <strong style={{ color: 'var(--black)' }}>{TEMPLATES[template].name}</strong>
                 </span>
+                <button
+                  className="btn-move"
+                  onClick={undo}
+                  disabled={!canUndo}
+                  aria-label="Undo"
+                  title={`Undo${canUndo ? ' (Ctrl+Z)' : ''}`}
+                  style={{ marginRight: '6px' }}
+                >
+                  ↶
+                </button>
+                <button
+                  className="btn-move"
+                  onClick={redo}
+                  disabled={!canRedo}
+                  aria-label="Redo"
+                  title={`Redo${canRedo ? ' (Ctrl+Shift+Z)' : ''}`}
+                  style={{ marginRight: '12px' }}
+                >
+                  ↷
+                </button>
                 <span
                   className={`save-indicator state-${saveState === 'idle' ? 'saved' : saveState}`}
                   role="status"
@@ -664,7 +739,7 @@ export function Builder() {
                             ↓
                           </button>
                         )}
-                        <button className="btn-move" onClick={() => duplicateEntry('experience', i)} title="Duplicate">⧉</button>
+                        <button className="btn-move" onClick={() => handleDuplicateEntry('experience', i)} title="Duplicate">⧉</button>
                         <button className="btn-remove" onClick={() => removeEntry('experience', i)}>Remove</button>
                       </div>
                     </div>
@@ -794,7 +869,7 @@ export function Builder() {
                             ↓
                           </button>
                         )}
-                        <button className="btn-move" onClick={() => duplicateEntry('education', i)} title="Duplicate">⧉</button>
+                        <button className="btn-move" onClick={() => handleDuplicateEntry('education', i)} title="Duplicate">⧉</button>
                         <button className="btn-remove" onClick={() => removeEntry('education', i)}>Remove</button>
                       </div>
                     </div>
@@ -918,7 +993,7 @@ export function Builder() {
                             ↓
                           </button>
                         )}
-                        <button className="btn-move" onClick={() => duplicateEntry('projects', i)} title="Duplicate">⧉</button>
+                        <button className="btn-move" onClick={() => handleDuplicateEntry('projects', i)} title="Duplicate">⧉</button>
                         <button className="btn-remove" onClick={() => removeEntry('projects', i)}>Remove</button>
                       </div>
                     </div>
@@ -996,7 +1071,7 @@ export function Builder() {
                             ↓
                           </button>
                         )}
-                        <button className="btn-move" onClick={() => duplicateEntry('certifications', i)} title="Duplicate">⧉</button>
+                        <button className="btn-move" onClick={() => handleDuplicateEntry('certifications', i)} title="Duplicate">⧉</button>
                         <button className="btn-remove" onClick={() => removeEntry('certifications', i)}>Remove</button>
                       </div>
                     </div>
@@ -1058,7 +1133,7 @@ export function Builder() {
                             ↓
                           </button>
                         )}
-                        <button className="btn-move" onClick={() => duplicateEntry('languages', i)} title="Duplicate">⧉</button>
+                        <button className="btn-move" onClick={() => handleDuplicateEntry('languages', i)} title="Duplicate">⧉</button>
                         <button className="btn-remove" onClick={() => removeEntry('languages', i)}>Remove</button>
                       </div>
                     </div>
@@ -1115,7 +1190,7 @@ export function Builder() {
                             ↓
                           </button>
                         )}
-                        <button className="btn-move" onClick={() => duplicateEntry('awards', i)} title="Duplicate">⧉</button>
+                        <button className="btn-move" onClick={() => handleDuplicateEntry('awards', i)} title="Duplicate">⧉</button>
                         <button className="btn-remove" onClick={() => removeEntry('awards', i)}>Remove</button>
                       </div>
                     </div>
