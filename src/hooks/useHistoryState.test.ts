@@ -189,4 +189,43 @@ describe('useHistoryState', () => {
     const [, , canUndo] = result.current;
     expect(canUndo).toBe(false); // No new entry created
   });
+
+  it('supports lazy initialization', () => {
+    const initSpy = vi.fn(() => ({ value: 'initial' }));
+    const { result } = renderHook(() => useHistoryState(initSpy));
+
+    expect(initSpy).toHaveBeenCalled();
+    const [value, , canUndo] = result.current;
+    expect(value).toEqual({ value: 'initial' });
+    expect(canUndo).toBe(false);
+  });
+
+  it('reset clears history and sets new value', () => {
+    const { result } = renderHook(() => useHistoryState({ value: 'a' }));
+
+    act(() => {
+      const [, setValue] = result.current;
+      setValue({ value: 'b' }, true);
+      vi.advanceTimersByTime(1000);
+      setValue({ value: 'c' }, true);
+    });
+
+    let [value, , canUndo] = result.current;
+    expect(canUndo).toBe(true);
+
+    act(() => {
+      const [, , , , , , reset] = result.current;
+      reset({ value: 'new' });
+    });
+
+    [value, , canUndo] = result.current;
+    expect(value).toEqual({ value: 'new' });
+    expect(canUndo).toBe(false);
+  });
+
+  it('lazy init leaves canUndo false', () => {
+    const { result } = renderHook(() => useHistoryState(() => ({ value: 'loaded' })));
+    const [, , canUndo] = result.current;
+    expect(canUndo).toBe(false);
+  });
 });

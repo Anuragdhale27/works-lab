@@ -35,7 +35,7 @@ export function Builder() {
   const [searchParams] = useSearchParams();
   const { showToast } = useToast();
 
-  const [data, setDataRaw, canUndo, canRedo, undo, redo] = useHistoryState<ResumeData>(emptyResumeData);
+  const [data, setDataRaw, canUndo, canRedo, undo, redo] = useHistoryState<ResumeData>(() => loadResumeData());
   const [template, setTemplate] = useState<TemplateKey>(() => {
     const t = searchParams.get('template');
     return isTemplateKey(t ?? undefined) ? (t as TemplateKey) : 'modern';
@@ -82,12 +82,6 @@ export function Builder() {
   const [savedAt, setSavedAt] = useState<Date | null>(null);
   const saveTimeoutRef = useRef<number | undefined>(undefined);
   const isFirstDataEffect = useRef(true);
-
-  // Load persisted data on mount only. Pass shouldStartNewEntry=false to avoid creating
-  // a history entry for the initial load — it's not a user action.
-  useEffect(() => {
-    setData(loadResumeData(), false);
-  }, [setData]);
 
   // Debounced persist on every change, with an honest saving/saved/error state.
   useEffect(() => {
