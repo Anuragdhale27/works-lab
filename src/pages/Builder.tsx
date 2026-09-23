@@ -21,6 +21,7 @@ import { useToast } from '../components/ToastProvider';
 import { SectionNav } from '../components/SectionNav';
 import { sampleResumeData } from '../lib/sampleData';
 import { computeOverallProgress, isResumeDataEmpty } from '../lib/completeness';
+import { exportResumeToDocx } from '../lib/exportDocx';
 
 const LEVELS = ['Native', 'Fluent', 'Professional', 'Conversational', 'Basic'];
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -400,6 +401,17 @@ export function Builder() {
     showToast('Resume data exported.');
   }
 
+  async function exportDocxFile() {
+    try {
+      showToast('Generating Word document...');
+      await exportResumeToDocx(data);
+      showToast('Resume exported as .docx');
+    } catch (err) {
+      console.error('Failed to export docx:', err);
+      showToast('Failed to export Word document.');
+    }
+  }
+
   function triggerImport() {
     importInputRef.current?.click();
   }
@@ -588,6 +600,9 @@ export function Builder() {
                 </button>
                 <button type="button" className="btn btn-outline btn-sm" onClick={exportData}>
                   Export JSON
+                </button>
+                <button type="button" className="btn btn-outline btn-sm" onClick={() => exportDocxFile()}>
+                  Export Word (.docx)
                 </button>
                 <button type="button" className="btn btn-outline btn-sm" onClick={triggerImport}>
                   Import JSON
@@ -1262,6 +1277,28 @@ export function Builder() {
                     <option key={t.key} value={t.key}>{t.name}</option>
                   ))}
                 </select>
+                <div className="accent-swatch-group">
+                  {[
+                    { name: 'Default', color: undefined },
+                    { name: 'Navy', color: '#1e3a5f' },
+                    { name: 'Teal', color: '#0f766e' },
+                    { name: 'Emerald', color: '#0E7A5A' },
+                    { name: 'Maroon', color: '#7f1d1d' },
+                    { name: 'Plum', color: '#5b21b6' },
+                    { name: 'Slate', color: '#334155' },
+                    { name: 'Charcoal', color: '#1f2937' },
+                  ].map((preset) => (
+                    <button
+                      key={preset.name}
+                      className="accent-swatch"
+                      style={preset.color ? { backgroundColor: preset.color } : { backgroundColor: '#e8e8e8' }}
+                      onClick={() => setData({ ...data, accent: preset.color })}
+                      aria-label={preset.name}
+                      aria-pressed={data.accent === preset.color}
+                      title={preset.name}
+                    />
+                  ))}
+                </div>
                 <button
                   className="btn btn-primary preview-header-download"
                   style={{ padding: '9px 18px', fontSize: '0.85rem' }}

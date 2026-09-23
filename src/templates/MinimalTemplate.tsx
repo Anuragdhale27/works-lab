@@ -6,7 +6,7 @@ export function MinimalTemplate({ data }: { data: ResumeData }) {
   const contactParts = [p.email, p.phone, p.location, p.linkedin, p.portfolio].filter(Boolean);
 
   return (
-    <div className="resume-minimal">
+    <div className="resume-minimal" style={data.accent ? { '--r-accent': data.accent } as React.CSSProperties : {}}>
       <div className="rmin-head">
         <div className="rmin-head-text">
           <div className="rmin-name">{p.name || 'Your Name'}</div>

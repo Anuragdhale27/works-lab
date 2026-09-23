@@ -4,7 +4,7 @@ import { Description } from './Description';
 export function SidebarTemplate({ data }: { data: ResumeData }) {
   const p = data.personal;
   return (
-    <div className="resume-sidebar">
+    <div className="resume-sidebar" style={data.accent ? { '--r-accent': data.accent } as React.CSSProperties : {}}>
       {/* Header section: name, title, summary. Rendered first in DOM for reading order. */}
       <div className="rsb-header">
         <div className="rsb-head-text">

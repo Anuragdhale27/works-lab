@@ -4,7 +4,7 @@ import { Description } from './Description';
 export function SplitTemplate({ data }: { data: ResumeData }) {
   const p = data.personal;
   return (
-    <div className="resume-split">
+    <div className="resume-split" style={data.accent ? { '--r-accent': data.accent } as React.CSSProperties : {}}>
       {/* Full-width header: name, title, and contact line. */}
       <div className="rsp-header">
         <div className="rsp-head-text">

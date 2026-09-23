@@ -5,7 +5,7 @@ export function ClassicTemplate({ data }: { data: ResumeData }) {
   const p = data.personal;
   const contactParts = [p.email, p.phone, p.location, p.linkedin, p.portfolio].filter(Boolean);
   return (
-    <div className="resume-classic">
+    <div className="resume-classic" style={data.accent ? { '--r-accent': data.accent } as React.CSSProperties : {}}>
       <div className="rcls-name">{p.name || 'Your Name'}</div>
       <div className="rcls-title">{p.title || 'Professional Title'}</div>
       <div className="rcls-contact">{contactParts.join('  |  ')}</div>

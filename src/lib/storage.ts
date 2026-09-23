@@ -12,6 +12,7 @@ const KNOWN_TOP_LEVEL_KEYS = [
   'certifications',
   'languages',
   'awards',
+  'accent',
 ] as const;
 
 const ARRAY_FIELDS = [
@@ -67,6 +68,11 @@ export function validateResumeData(raw: unknown): ResumeData | null {
   const personalRaw = isPlainObject(raw.personal) ? raw.personal : {};
   const stringField = (v: unknown) => (typeof v === 'string' ? v : '');
 
+  // Validate accent: must be a valid hex color (#RRGGBB)
+  const accentRaw = stringField(raw.accent);
+  const isValidHex = /^#[0-9a-fA-F]{6}$/.test(accentRaw);
+  const accent = isValidHex ? accentRaw : undefined;
+
   return {
     personal: {
       name: stringField(personalRaw.name),
@@ -91,6 +97,7 @@ export function validateResumeData(raw: unknown): ResumeData | null {
     certifications: sanitizeEntryArray(raw.certifications, { name: '', org: '', year: '', url: '' }),
     languages: sanitizeEntryArray(raw.languages, { lang: '', level: '' }),
     awards: sanitizeEntryArray(raw.awards, { title: '', issuer: '', year: '', description: '' }),
+    accent,
   };
 }
 

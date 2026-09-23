@@ -64,6 +64,7 @@ export interface ResumeData {
   certifications: CertificationEntry[];
   languages: LanguageEntry[];
   awards: AwardEntry[];
+  accent?: string;
 }
 
 export const emptyResumeData: ResumeData = {
@@ -85,6 +86,7 @@ export const emptyResumeData: ResumeData = {
   certifications: [],
   languages: [],
   awards: [],
+  accent: undefined,
 };
 
 export type TemplateKey = 'modern' | 'classic' | 'minimal' | 'executive' | 'sidebar' | 'split';

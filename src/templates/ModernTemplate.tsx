@@ -4,7 +4,7 @@ import { Description } from './Description';
 export function ModernTemplate({ data }: { data: ResumeData }) {
   const p = data.personal;
   return (
-    <div className="resume-modern">
+    <div className="resume-modern" style={data.accent ? { '--r-accent': data.accent } as React.CSSProperties : {}}>
       <div className="rmod-header">
         <div className="rmod-head-text">
         <div className="rmod-name">{p.name || 'Your Name'}</div>

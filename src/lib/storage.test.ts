@@ -55,4 +55,45 @@ describe('validateResumeData', () => {
       description: '',
     });
   });
+
+  it('accepts a valid hex accent color #RRGGBB', () => {
+    const sample = {
+      personal: { name: 'John Doe' },
+      accent: '#7f1d1d',
+    };
+    const result = validateResumeData(sample);
+    expect(result).not.toBeNull();
+    expect(result?.accent).toBe('#7f1d1d');
+  });
+
+  it('rejects an invalid accent color (e.g. "red")', () => {
+    const sample = {
+      personal: { name: 'John Doe' },
+      accent: 'red',
+    };
+    const result = validateResumeData(sample);
+    expect(result).not.toBeNull();
+    expect(result?.accent).toBeUndefined();
+  });
+
+  it('rejects an invalid hex accent color with wrong length (e.g. "#12")', () => {
+    const sample = {
+      personal: { name: 'John Doe' },
+      accent: '#12',
+    };
+    const result = validateResumeData(sample);
+    expect(result).not.toBeNull();
+    expect(result?.accent).toBeUndefined();
+  });
+
+  it('loads old data without accent field and returns undefined', () => {
+    const sample = {
+      personal: { name: 'John Doe' },
+      summary: 'A summary',
+      // accent intentionally missing
+    };
+    const result = validateResumeData(sample);
+    expect(result).not.toBeNull();
+    expect(result?.accent).toBeUndefined();
+  });
 });
