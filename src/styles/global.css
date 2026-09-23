@@ -1243,14 +1243,14 @@ footer {
   line-height: var(--r-lh-tight);
   margin-bottom: var(--r-sp-1);
 }
-.rmod-title { font-size: var(--r-title); font-weight: 500; opacity: 0.85; margin-bottom: var(--r-sp-2); }
+.rmod-title { font-size: var(--r-title); font-weight: 500; color: #d9d9d9; margin-bottom: var(--r-sp-2); }
 
 .rmod-contact {
   display: flex;
   flex-wrap: wrap;
   gap: var(--r-sp-4);
   font-size: var(--r-text-sm);
-  opacity: 0.75;
+  color: #bfbfbf;
 }
 
 .rmod-body { padding: var(--r-sp-6) var(--r-margin); }
@@ -1484,8 +1484,8 @@ footer {
 .rsp-header { grid-area: header; display: flex; align-items: center; justify-content: space-between; gap: var(--r-sp-4); background: #3d3d3d; color: #fff; padding: var(--r-sp-6) var(--r-margin); }
 .rsp-head-text { flex: 1; min-width: 0; overflow-wrap: anywhere; }
 .rsp-name { font-family: 'Playfair Display', serif; font-size: var(--r-name); font-weight: 700; letter-spacing: 0.01em; line-height: var(--r-lh-tight); margin-bottom: var(--r-sp-1); }
-.rsp-title { font-size: var(--r-title); font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase; opacity: 0.9; margin-bottom: var(--r-sp-2); }
-.rsp-contact-line { display: flex; flex-wrap: wrap; gap: var(--r-sp-3); font-size: var(--r-text-sm); opacity: 0.75; }
+.rsp-title { font-size: var(--r-title); font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase; color: #e6e6e6; margin-bottom: var(--r-sp-2); }
+.rsp-contact-line { display: flex; flex-wrap: wrap; gap: var(--r-sp-3); font-size: var(--r-text-sm); color: #bfbfbf; }
 .rsp-contact-line span { display: block; }
 .rsp-photo { width: 84px; height: 84px; object-fit: cover; flex-shrink: 0; break-inside: avoid; }
 
