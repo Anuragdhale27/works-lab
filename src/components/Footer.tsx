@@ -21,7 +21,7 @@ export function Footer() {
           </ul>
         </div>
         <div className="footer-bottom">
-          <span>© 2025 Works Lab. All rights reserved.</span>
+          <span>© {new Date().getFullYear()} Works Lab. All rights reserved.</span>
           <span>Made in India 🇮🇳</span>
         </div>
       </div>
