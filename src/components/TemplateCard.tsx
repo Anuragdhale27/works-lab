@@ -5,26 +5,22 @@ import { CONFIG, goToPayment } from '../lib/config';
 
 export function TemplateCard({ template }: { template: TemplateMeta }) {
   return (
-    <div className="template-card fade-in">
-      <Link to={`/template/${template.key}`} className="template-preview" aria-label={`Preview ${template.name}`}>
+    <div className="lp-tpl-card fade-in">
+      <Link to={`/template/${template.key}`} className="lp-tpl-preview" aria-label={`Preview ${template.name}`}>
         <TemplatePreview template={template} />
       </Link>
-      <div className="template-card-body">
-        <div className="template-card-name">{template.name}</div>
-        <div className="template-card-tag">Best for: {template.best}</div>
-        <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-          <span className="badge badge-green" style={{ fontSize: '0.65rem', padding: '3px 10px' }}>
-            ATS Friendly
-          </span>
-        </div>
-        <div className="template-card-footer">
-          <div className="template-price">₹{CONFIG.PRODUCT_PRICE}</div>
-          <div className="template-actions">
+      <div className="lp-tpl-body">
+        <span className="badge badge-green lp-tpl-badge">ATS Friendly</span>
+        <div className="lp-tpl-name">{template.name}</div>
+        <div className="lp-tpl-best">Best for: {template.best}</div>
+        <div className="lp-tpl-footer">
+          <div className="lp-tpl-price">₹{CONFIG.PRODUCT_PRICE}</div>
+          <div className="lp-tpl-actions">
             <Link to={`/template/${template.key}`} className="btn btn-outline btn-sm">
               Preview
             </Link>
             <button className="btn btn-primary btn-sm" onClick={() => goToPayment(template.key)}>
-              Get This
+              Get this
             </button>
           </div>
         </div>
