@@ -56,4 +56,12 @@ export const sampleResumeData: ResumeData = {
     { lang: 'English', level: 'Professional' },
     { lang: 'Hindi', level: 'Native' },
   ],
+  awards: [
+    {
+      title: 'Spot Award',
+      issuer: 'Infosys',
+      year: '2023',
+      description: 'Recognized for excellence in microservices architecture design and technical leadership',
+    },
+  ],
 };

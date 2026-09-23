@@ -11,6 +11,7 @@ const KNOWN_TOP_LEVEL_KEYS = [
   'projects',
   'certifications',
   'languages',
+  'awards',
 ] as const;
 
 const ARRAY_FIELDS = [
@@ -20,6 +21,7 @@ const ARRAY_FIELDS = [
   'projects',
   'certifications',
   'languages',
+  'awards',
 ] as const;
 
 function isPlainObject(value: unknown): value is Record<string, unknown> {
@@ -88,6 +90,7 @@ export function validateResumeData(raw: unknown): ResumeData | null {
     projects: sanitizeEntryArray(raw.projects, { name: '', tech: '', url: '', description: '' }),
     certifications: sanitizeEntryArray(raw.certifications, { name: '', org: '', year: '', url: '' }),
     languages: sanitizeEntryArray(raw.languages, { lang: '', level: '' }),
+    awards: sanitizeEntryArray(raw.awards, { title: '', issuer: '', year: '', description: '' }),
   };
 }
 

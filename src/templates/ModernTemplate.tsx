@@ -124,6 +124,22 @@ export function ModernTemplate({ data }: { data: ResumeData }) {
             </div>
           </div>
         )}
+
+        {data.awards.length > 0 && (
+          <div className="rmod-section">
+            <div className="rmod-section-title">Awards & Achievements</div>
+            {data.awards.map((award, i) => (
+              <div className="rmod-exp-item" key={i}>
+                <div className="rmod-exp-header">
+                  <div className="rmod-exp-title">{award.title || 'Award'}</div>
+                  <div className="rmod-exp-date">{award.year}</div>
+                </div>
+                <div className="rmod-exp-company">{award.issuer}</div>
+                {award.description && <div className="rmod-exp-desc"><Description text={award.description} /></div>}
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

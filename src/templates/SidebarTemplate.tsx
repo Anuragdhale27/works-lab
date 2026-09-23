@@ -76,6 +76,26 @@ export function SidebarTemplate({ data }: { data: ResumeData }) {
           </div>
         )}
 
+        {data.awards.length > 0 && (
+          <div className="rsb-section">
+            <div className="rsb-section-title">Awards & Achievements</div>
+            {data.awards.map((award, i) => (
+              <div className="rsb-exp-item" key={i}>
+                <div className="rsb-exp-header">
+                  <div className="rsb-exp-title">{award.title || 'Award'}</div>
+                  <div className="rsb-exp-date">{award.year}</div>
+                </div>
+                <div className="rsb-exp-company">{award.issuer}</div>
+                {award.description && (
+                  <div className="rsb-exp-desc">
+                    <Description text={award.description} />
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+
         {data.education.length > 0 && (
           <div className="rsb-section">
             <div className="rsb-section-title">Education</div>

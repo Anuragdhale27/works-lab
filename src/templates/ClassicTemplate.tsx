@@ -95,6 +95,22 @@ export function ClassicTemplate({ data }: { data: ResumeData }) {
           </div>
         </>
       )}
+
+      {data.awards.length > 0 && (
+        <>
+          <div className="rcls-section-title">Awards & Achievements</div>
+          {data.awards.map((award, i) => (
+            <div className="rcls-exp-item" key={i}>
+              <div className="rcls-exp-header">
+                <div className="rcls-exp-title">{award.title || 'Award'}</div>
+                <div className="rcls-exp-date">{award.year}</div>
+              </div>
+              <div className="rcls-exp-sub">{award.issuer}</div>
+              {award.description && <div className="rcls-desc"><Description text={award.description} /></div>}
+            </div>
+          ))}
+        </>
+      )}
     </div>
   );
 }

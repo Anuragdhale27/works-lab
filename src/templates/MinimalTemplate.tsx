@@ -108,6 +108,22 @@ export function MinimalTemplate({ data }: { data: ResumeData }) {
           </div>
         </div>
       )}
+
+      {data.awards.length > 0 && (
+        <div className="rmin-section">
+          <div className="rmin-section-title">Awards & Achievements</div>
+          {data.awards.map((award, i) => (
+            <div className="rmin-item" key={i}>
+              <div className="rmin-item-header">
+                <div className="rmin-item-title">{award.title || 'Award'}</div>
+                <div className="rmin-item-date">{award.year}</div>
+              </div>
+              <div className="rmin-item-sub">{award.issuer}</div>
+              {award.description && <div className="rmin-desc"><Description text={award.description} /></div>}
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

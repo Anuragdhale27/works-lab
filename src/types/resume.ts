@@ -47,6 +47,13 @@ export interface LanguageEntry {
   level: string;
 }
 
+export interface AwardEntry {
+  title: string;
+  issuer: string;
+  year: string;
+  description: string;
+}
+
 export interface ResumeData {
   personal: PersonalInfo;
   summary: string;
@@ -56,6 +63,7 @@ export interface ResumeData {
   projects: ProjectEntry[];
   certifications: CertificationEntry[];
   languages: LanguageEntry[];
+  awards: AwardEntry[];
 }
 
 export const emptyResumeData: ResumeData = {
@@ -76,6 +84,7 @@ export const emptyResumeData: ResumeData = {
   projects: [],
   certifications: [],
   languages: [],
+  awards: [],
 };
 
 export type TemplateKey = 'modern' | 'classic' | 'minimal' | 'executive' | 'sidebar' | 'split';

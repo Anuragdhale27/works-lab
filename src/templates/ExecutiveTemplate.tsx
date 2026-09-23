@@ -111,6 +111,20 @@ export function ExecutiveTemplate({ data }: { data: ResumeData }) {
             </div>
           </div>
         )}
+
+        {data.awards.length > 0 && (
+          <div className="rexe-section">
+            <div className="rexe-section-title">Awards & Achievements</div>
+            <hr className="rexe-divider" />
+            {data.awards.map((award, i) => (
+              <div className="rexe-item" key={i}>
+                <div className="rexe-exp-title">{award.title || 'Award'}</div>
+                <div className="rexe-exp-sub">{award.issuer}{award.year ? ` · ${award.year}` : ''}</div>
+                {award.description && <div className="rexe-desc"><Description text={award.description} /></div>}
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

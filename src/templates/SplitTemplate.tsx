@@ -84,6 +84,26 @@ export function SplitTemplate({ data }: { data: ResumeData }) {
             ))}
           </div>
         )}
+
+        {data.awards.length > 0 && (
+          <div className="rsp-section">
+            <div className="rsp-section-title">Awards & Achievements</div>
+            {data.awards.map((award, i) => (
+              <div className="rsp-exp-item" key={i}>
+                <div className="rsp-exp-header">
+                  <div className="rsp-exp-title">{award.title || 'Award'}</div>
+                  <div className="rsp-exp-date">{award.year}</div>
+                </div>
+                <div className="rsp-exp-company">{award.issuer}</div>
+                {award.description && (
+                  <div className="rsp-exp-desc">
+                    <Description text={award.description} />
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Sidebar column: skills, education, certifications, languages (rendered after main in DOM). */}

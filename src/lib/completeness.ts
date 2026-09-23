@@ -10,7 +10,8 @@ export type SectionKey =
   | 'skills'
   | 'projects'
   | 'certifications'
-  | 'languages';
+  | 'languages'
+  | 'awards';
 
 export interface SectionMeta {
   key: SectionKey;
@@ -27,6 +28,7 @@ export const SECTIONS: SectionMeta[] = [
   { key: 'projects', label: 'Projects', optional: true },
   { key: 'certifications', label: 'Certifications', optional: true },
   { key: 'languages', label: 'Languages', optional: true },
+  { key: 'awards', label: 'Awards & Achievements', optional: true },
 ];
 
 const REQUIRED_KEYS: SectionKey[] = ['personal', 'summary', 'experience', 'education', 'skills'];
@@ -40,6 +42,7 @@ const NEXT_ACTION: Record<SectionKey, string> = {
   projects: 'Add a project to strengthen your resume.',
   certifications: 'Add a certification to strengthen your resume.',
   languages: 'Add a language to strengthen your resume.',
+  awards: 'Add an award to strengthen your resume.',
 };
 
 function personalStatus(p: ResumeData['personal']): SectionStatus {
@@ -97,6 +100,12 @@ function languagesStatus(entries: ResumeData['languages']): SectionStatus {
   return hasComplete ? 'complete' : 'partial';
 }
 
+function awardsStatus(entries: ResumeData['awards']): SectionStatus {
+  if (entries.length === 0) return 'empty';
+  const hasComplete = entries.some((e) => e.title.trim() && e.issuer.trim());
+  return hasComplete ? 'complete' : 'partial';
+}
+
 export function computeSectionStatuses(data: ResumeData): Record<SectionKey, SectionStatus> {
   return {
     personal: personalStatus(data.personal),
@@ -107,6 +116,7 @@ export function computeSectionStatuses(data: ResumeData): Record<SectionKey, Sec
     projects: projectsStatus(data.projects),
     certifications: certificationsStatus(data.certifications),
     languages: languagesStatus(data.languages),
+    awards: awardsStatus(data.awards),
   };
 }
 
