@@ -1,159 +1,167 @@
 import { Layout } from '../components/Layout';
 import { TemplateCard } from '../components/TemplateCard';
+import { TemplatePreview } from '../components/TemplatePreview';
 import { FaqAccordion } from '../components/FaqAccordion';
 import { TEMPLATE_KEYS, TEMPLATES } from '../templates';
-import { goToPayment } from '../lib/config';
+import { CONFIG, goToPayment } from '../lib/config';
+import { sampleResumeData } from '../lib/sampleData';
 import { useFadeIn } from '../hooks/useFadeIn';
+import '../styles/landing.css';
 
 export function Landing() {
   useFadeIn();
 
+  const firstExperience = sampleResumeData.experience[0];
+  const firstEducation = sampleResumeData.education[0];
+
   return (
     <Layout>
-      {/* HERO */}
-      <section className="hero">
-        <div className="container">
-          <div className="hero-inner">
-            <div className="hero-text">
-              <div className="hero-badge fade-in">
-                <span className="badge">ATS-Friendly Resume Templates</span>
-              </div>
-              <h1 className="fade-in">Stop sending the same boring resume.</h1>
-              <p className="hero-sub fade-in">
-                Create a professional, ATS-friendly resume in minutes — without fighting with Word formatting.
+      <div className="lp-page">
+        {/* HERO */}
+        <section className="lp-hero">
+          <div className="container lp-hero-inner">
+            <div className="lp-hero-text">
+              <span className="lp-eyebrow fade-in">Built for the Indian job market</span>
+              <h1 className="lp-hero-title fade-in">A resume that gets past the bots and into a human's hands.</h1>
+              <p className="lp-hero-sub fade-in">
+                A real, <strong>selectable-text PDF</strong> that applicant tracking systems can actually read.{' '}
+                <strong>₹{CONFIG.PRODUCT_PRICE} once</strong> — no subscription. Your details stay{' '}
+                <strong>on your device</strong> — nothing is ever sent to a server.
               </p>
-              <div className="hero-actions fade-in">
+              <div className="lp-hero-actions fade-in">
                 <button className="btn btn-primary btn-lg" onClick={() => goToPayment('modern')}>
-                  Build My Resume – ₹149
+                  Build my resume — ₹{CONFIG.PRODUCT_PRICE}
                 </button>
                 <a href="#templates" className="btn btn-outline btn-lg">
-                  View Templates
+                  See templates
                 </a>
               </div>
-              <div className="trust-text fade-in">
+              <p className="lp-hero-trust fade-in">
                 One-time payment
-                <span className="trust-dot"></span>
+                <span className="lp-trust-dot"></span>
                 Instant access
-                <span className="trust-dot"></span>
+                <span className="lp-trust-dot"></span>
                 No subscription
-              </div>
+              </p>
             </div>
 
-            <div className="hero-visual fade-in">
-              <div style={{ position: 'relative', maxWidth: '340px', margin: '0 auto' }}>
-                <span className="badge-floating badge-green">ATS Friendly ✓</span>
-                <div className="resume-mockup">
-                  <div className="resume-mockup-header">
-                    <div className="rm-name">Rahul Sharma</div>
-                    <div className="rm-title">Software Engineer · Bengaluru, India</div>
-                    <div className="rm-contact">
-                      <span>rahul@email.com</span>
-                      <span>+91 98765 43210</span>
-                      <span>linkedin.com/in/rahuls</span>
-                    </div>
-                  </div>
-                  <div className="resume-mockup-body">
-                    <div className="rm-section">
-                      <div className="rm-section-title">Professional Summary</div>
-                      <div className="rm-line"></div>
-                      <div className="rm-line short"></div>
-                    </div>
-                    <div className="rm-section">
-                      <div className="rm-section-title">Work Experience</div>
-                      <div className="rm-exp-title">Senior Software Engineer</div>
-                      <div className="rm-exp-sub">Infosys · Jun 2022 – Present</div>
-                      <div className="rm-line"></div>
-                      <div className="rm-line shorter"></div>
-                    </div>
-                    <div className="rm-section">
-                      <div className="rm-section-title">Education</div>
-                      <div className="rm-exp-title">B.Tech Computer Science</div>
-                      <div className="rm-exp-sub">VIT Vellore · 2018–2022</div>
-                    </div>
-                    <div className="rm-section">
-                      <div className="rm-section-title">Skills</div>
-                      <div className="rm-skills">
-                        <span className="rm-skill-tag">React</span>
-                        <span className="rm-skill-tag">Node.js</span>
-                        <span className="rm-skill-tag">Python</span>
-                        <span className="rm-skill-tag">AWS</span>
-                        <span className="rm-skill-tag">SQL</span>
-                      </div>
-                    </div>
-                  </div>
+            <div className="lp-hero-visual fade-in" aria-hidden="true">
+              <div className="lp-preview-stack">
+                <div className="lp-preview-card lp-preview-card--back">
+                  <TemplatePreview template={TEMPLATES.classic} />
                 </div>
+                <div className="lp-preview-card lp-preview-card--front">
+                  <TemplatePreview template={TEMPLATES.modern} />
+                </div>
+                <span className="lp-preview-tag">Real, ATS-readable PDF</span>
               </div>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* PROBLEM */}
-      <section className="problem-section">
-        <div className="container">
-          <div className="section-label fade-in">The Real Problem</div>
-          <h2 className="section-title fade-in" style={{ color: 'white' }}>
-            Your resume shouldn't be the reason you get ignored.
-          </h2>
-
-          <div className="problems-grid" style={{ marginTop: '48px' }}>
-            <div className="problem-card fade-in">
-              <div className="problem-icon" aria-hidden="true">❌</div>
-              <h3>Poor Formatting</h3>
-              <p>Inconsistent spacing, odd fonts, misaligned sections — recruiters notice these instantly and move on.</p>
-            </div>
-            <div className="problem-card fade-in">
-              <div className="problem-icon" aria-hidden="true">❌</div>
-              <h3>Difficult-to-Read Layouts</h3>
-              <p>Overly complex designs make it hard for hiring managers to quickly find what they're looking for.</p>
-            </div>
-            <div className="problem-card fade-in">
-              <div className="problem-icon" aria-hidden="true">❌</div>
-              <h3>ATS Screening Failures</h3>
-              <p>Applicant Tracking Systems reject resumes with wrong formatting before a human ever sees them.</p>
-            </div>
+        {/* PROOF STRIP */}
+        <section className="lp-proof">
+          <div className="container">
+            <ul className="lp-proof-list">
+              <li className="fade-in">4 ATS-safe templates</li>
+              <li className="fade-in">Real text PDF — not an image</li>
+              <li className="fade-in">₹{CONFIG.PRODUCT_PRICE} once. No subscription.</li>
+              <li className="fade-in">Your data never leaves your browser</li>
+            </ul>
           </div>
+        </section>
 
-          <div className="solution-box fade-in">
-            <p>
-              Works Lab gives you clean, professional resume templates designed around readability and ATS-friendly
-              structure — so your application gets where it needs to go.
+        {/* THE DIFFERENTIATOR: WHAT AN ATS ACTUALLY READS */}
+        <section className="lp-ats">
+          <div className="container">
+            <div className="lp-ats-head">
+              <span className="lp-eyebrow fade-in">What an ATS actually reads</span>
+              <h2 className="lp-section-title fade-in">
+                Your Works Lab PDF isn't a picture of a resume. It's real text.
+              </h2>
+              <p className="lp-section-sub fade-in">
+                Export uses your browser's own print pipeline, so every character — your name, dates, bullet points
+                — stays selectable, searchable text in the PDF. That's exactly what an applicant tracking system
+                parses.
+              </p>
+            </div>
+
+            <div className="lp-ats-grid">
+              <div className="lp-ats-resume fade-in">
+                <TemplatePreview template={TEMPLATES.modern} />
+              </div>
+              <div className="lp-ats-arrow fade-in">→</div>
+              <div className="lp-ats-parsed fade-in">
+                <div className="lp-ats-parsed-label">Parsed by an ATS</div>
+                <dl className="lp-ats-fields">
+                  <div>
+                    <dt>Name</dt>
+                    <dd>{sampleResumeData.personal.name}</dd>
+                  </div>
+                  <div>
+                    <dt>Email</dt>
+                    <dd>{sampleResumeData.personal.email}</dd>
+                  </div>
+                  <div>
+                    <dt>Phone</dt>
+                    <dd>{sampleResumeData.personal.phone}</dd>
+                  </div>
+                  <div>
+                    <dt>Experience</dt>
+                    <dd>
+                      {firstExperience.title} · {firstExperience.company}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt>Education</dt>
+                    <dd>{firstEducation.degree}</dd>
+                  </div>
+                  <div>
+                    <dt>Skills</dt>
+                    <dd>{sampleResumeData.skills.slice(0, 5).join(', ')}</dd>
+                  </div>
+                </dl>
+              </div>
+            </div>
+
+            <p className="lp-ats-note fade-in">
+              See for yourself — open a resume you've downloaded and try selecting the text.
             </p>
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* HOW IT WORKS */}
-      <section id="how-it-works">
-        <div className="container">
-          <div className="section-label fade-in">Simple Process</div>
-          <h2 className="section-title fade-in">Three steps to a better resume.</h2>
+        {/* HOW IT WORKS */}
+        <section className="lp-how" id="how-it-works">
+          <div className="container">
+            <span className="lp-eyebrow fade-in">How it works</span>
+            <h2 className="lp-section-title fade-in">Three steps. No design skills needed.</h2>
 
-          <div className="how-grid">
-            <div className="how-card fade-in">
-              <div className="how-step">1</div>
-              <h3>Choose a Template</h3>
-              <p>Pick a design that fits your career stage — modern, classic, minimal, or executive.</p>
-            </div>
-            <div className="how-card fade-in">
-              <div className="how-step">2</div>
-              <h3>Add Your Details</h3>
-              <p>Fill out a simple guided form. Your resume preview updates as you type.</p>
-            </div>
-            <div className="how-card fade-in">
-              <div className="how-step">3</div>
-              <h3>Download Your Resume</h3>
-              <p>Get a polished A4 PDF ready to send to any recruiter or portal.</p>
+            <ol className="lp-how-steps">
+              <li className="fade-in">
+                <span className="lp-how-num" aria-hidden="true">01</span>
+                <h3>Pick a template</h3>
+                <p>Choose Modern, Classic, Minimal or Executive — whichever fits your role.</p>
+              </li>
+              <li className="fade-in">
+                <span className="lp-how-num" aria-hidden="true">02</span>
+                <h3>Fill a guided form</h3>
+                <p>Type your details into a simple form while a true-to-size A4 preview updates live beside it.</p>
+              </li>
+              <li className="fade-in">
+                <span className="lp-how-num" aria-hidden="true">03</span>
+                <h3>Save as PDF</h3>
+                <p>Use your browser's print dialog to save a real, ATS-readable PDF — no extra software.</p>
+              </li>
+            </ol>
+
+            <div style={{ textAlign: 'center', marginTop: '48px' }} className="fade-in">
+              <button className="btn btn-dark btn-lg" onClick={() => goToPayment('modern')}>
+                Build my resume — ₹{CONFIG.PRODUCT_PRICE}
+              </button>
             </div>
           </div>
-
-          <div style={{ textAlign: 'center' }} className="fade-in">
-            <button className="btn btn-dark btn-lg" onClick={() => goToPayment('modern')}>
-              Create My Resume – ₹149
-            </button>
-          </div>
-        </div>
-      </section>
+        </section>
+      </div>
 
       {/* TEMPLATES */}
       <section id="templates" className="templates-section">
