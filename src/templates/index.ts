@@ -4,6 +4,8 @@ import { ModernTemplate } from './ModernTemplate';
 import { ClassicTemplate } from './ClassicTemplate';
 import { MinimalTemplate } from './MinimalTemplate';
 import { ExecutiveTemplate } from './ExecutiveTemplate';
+import { SidebarTemplate } from './SidebarTemplate';
+import { SplitTemplate } from './SplitTemplate';
 
 export interface TemplateMeta {
   key: TemplateKey;
@@ -14,7 +16,7 @@ export interface TemplateMeta {
   Component: ComponentType<{ data: ResumeData }>;
 }
 
-// Single source of truth for the 4 resume templates: the builder's live
+// Single source of truth for the 6 resume templates: the builder's live
 // preview, the landing page's template gallery, and the template detail
 // page all render from this registry instead of hand-duplicated markup.
 export const TEMPLATES: Record<TemplateKey, TemplateMeta> = {
@@ -53,6 +55,24 @@ export const TEMPLATES: Record<TemplateKey, TemplateMeta> = {
     description:
       'A light, premium resume designed for senior leaders. Typographic confidence and restrained detailing — a Playfair Display name, a single charcoal-navy accent — convey seniority without gimmicks.',
     Component: ExecutiveTemplate,
+  },
+  sidebar: {
+    key: 'sidebar',
+    name: 'Sidebar ATS',
+    best: 'Tech / Product / Design',
+    color: '#164e63',
+    description:
+      'A two-column layout with a narrow sidebar for contact and skills, and a spacious main column for experience. Clean and focused — perfect for technical roles where expertise shines.',
+    Component: SidebarTemplate,
+  },
+  split: {
+    key: 'split',
+    name: 'Split ATS',
+    best: 'Business / Marketing / Sales',
+    color: '#3d3d3d',
+    description:
+      'A two-column design with a full-width header and serif typography. Main column for experience, side column for skills. Professional and polished for leadership and creative roles.',
+    Component: SplitTemplate,
   },
 };
 

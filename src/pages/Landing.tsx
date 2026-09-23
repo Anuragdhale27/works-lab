@@ -141,7 +141,7 @@ export function Landing() {
               <li className="fade-in">
                 <span className="lp-how-num" aria-hidden="true">01</span>
                 <h3>Pick a template</h3>
-                <p>Choose Modern, Classic, Minimal or Executive — whichever fits your role.</p>
+                <p>Choose from Modern, Classic, Minimal, Executive, Sidebar or Split — whichever fits your role.</p>
               </li>
               <li className="fade-in">
                 <span className="lp-how-num" aria-hidden="true">02</span>
@@ -168,7 +168,7 @@ export function Landing() {
           <div className="container">
             <div className="lp-section-head">
               <span className="lp-eyebrow fade-in">Resume templates</span>
-              <h2 className="lp-section-title fade-in">Four templates. All built to be read by a machine first.</h2>
+              <h2 className="lp-section-title fade-in">Six templates. All built to be read by a machine first.</h2>
               <p className="lp-section-sub fade-in">
                 Pick the one that fits your field, then fill it in — you can switch anytime in the builder without
                 losing your details.
@@ -300,7 +300,7 @@ export function Landing() {
               </div>
 
               <ul className="lp-pricing-list">
-                <li>All 4 templates — Modern, Classic, Minimal, Executive</li>
+                <li>All 6 templates — Modern, Classic, Minimal, Executive, Sidebar, Split</li>
                 <li>The full guided builder, with unlimited edits</li>
                 <li>Live true-A4 preview with page-break markers</li>
                 <li>Unlimited real-text PDF exports via your browser's print dialog</li>

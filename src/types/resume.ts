@@ -78,4 +78,4 @@ export const emptyResumeData: ResumeData = {
   languages: [],
 };
 
-export type TemplateKey = 'modern' | 'classic' | 'minimal' | 'executive';
+export type TemplateKey = 'modern' | 'classic' | 'minimal' | 'executive' | 'sidebar' | 'split';
