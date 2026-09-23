@@ -105,35 +105,30 @@ export function SidebarTemplate({ data }: { data: ResumeData }) {
             {p.email && (
               <div className="rsb-contact-item">
                 <strong>Email</strong>
-                <br />
                 {p.email}
               </div>
             )}
             {p.phone && (
               <div className="rsb-contact-item">
                 <strong>Phone</strong>
-                <br />
                 {p.phone}
               </div>
             )}
             {p.location && (
               <div className="rsb-contact-item">
                 <strong>Location</strong>
-                <br />
                 {p.location}
               </div>
             )}
             {p.linkedin && (
               <div className="rsb-contact-item">
                 <strong>LinkedIn</strong>
-                <br />
                 {p.linkedin}
               </div>
             )}
             {p.portfolio && (
               <div className="rsb-contact-item">
                 <strong>Portfolio</strong>
-                <br />
                 {p.portfolio}
               </div>
             )}

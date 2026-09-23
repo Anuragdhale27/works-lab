@@ -1454,7 +1454,7 @@ footer {
 
 .rsb-contact { display: flex; flex-direction: column; gap: var(--r-sp-2); }
 .rsb-contact-item { font-size: var(--r-text-sm); color: var(--r-ink); line-height: var(--r-lh-tight); }
-.rsb-contact-item strong { font-weight: 700; display: block; color: #164e63; margin-bottom: 2px; line-height: 1; }
+.rsb-contact-item strong { font-weight: 700; display: block; color: #164e63; margin-bottom: 0; }
 
 .rsb-skills { display: flex; flex-wrap: wrap; gap: var(--r-sp-2); }
 .rsb-skill { background: #f0f9fb; color: #164e63; border-radius: 3px; padding: 4px 10px; font-size: var(--r-text-sm); font-weight: 600; }
