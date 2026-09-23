@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { useSearchParams } from 'react-router-dom';
 import { Link } from 'react-router-dom';
 import type {
+  AwardEntry,
   CertificationEntry,
   EducationEntry,
   ExperienceEntry,
@@ -198,14 +199,14 @@ export function Builder() {
   }
 
   // Generic helpers for repeatable array sections.
-  function addEntry<K extends 'experience' | 'education' | 'projects' | 'certifications' | 'languages'>(
+  function addEntry<K extends 'experience' | 'education' | 'projects' | 'certifications' | 'languages' | 'awards'>(
     key: K,
     entry: ResumeData[K][number],
   ) {
     setData((d) => ({ ...d, [key]: [...d[key], entry] } as ResumeData));
   }
 
-  function updateEntry<K extends 'experience' | 'education' | 'projects' | 'certifications' | 'languages'>(
+  function updateEntry<K extends 'experience' | 'education' | 'projects' | 'certifications' | 'languages' | 'awards'>(
     key: K,
     index: number,
     field: string,
@@ -218,7 +219,7 @@ export function Builder() {
     });
   }
 
-  function removeEntry<K extends 'experience' | 'education' | 'projects' | 'certifications' | 'languages'>(
+  function removeEntry<K extends 'experience' | 'education' | 'projects' | 'certifications' | 'languages' | 'awards'>(
     key: K,
     index: number,
   ) {
@@ -229,7 +230,7 @@ export function Builder() {
     });
   }
 
-  function moveEntry<K extends 'experience' | 'education' | 'projects' | 'certifications' | 'languages'>(
+  function moveEntry<K extends 'experience' | 'education' | 'projects' | 'certifications' | 'languages' | 'awards'>(
     key: K,
     index: number,
     direction: 'up' | 'down',
@@ -239,6 +240,19 @@ export function Builder() {
       const newIndex = direction === 'up' ? index - 1 : index + 1;
       if (newIndex < 0 || newIndex >= list.length) return d;
       [list[index], list[newIndex]] = [list[newIndex], list[index]];
+      return { ...d, [key]: list } as ResumeData;
+    });
+  }
+
+  function duplicateEntry<K extends 'experience' | 'education' | 'projects' | 'certifications' | 'languages' | 'awards'>(
+    key: K,
+    index: number,
+  ) {
+    setData((d) => {
+      const list = [...(d[key] as unknown[])];
+      if (index < 0 || index >= list.length) return d;
+      const copy = structuredClone(list[index]);
+      list.splice(index + 1, 0, copy);
       return { ...d, [key]: list } as ResumeData;
     });
   }
@@ -650,6 +664,7 @@ export function Builder() {
                             ↓
                           </button>
                         )}
+                        <button className="btn-move" onClick={() => duplicateEntry('experience', i)} title="Duplicate">⧉</button>
                         <button className="btn-remove" onClick={() => removeEntry('experience', i)}>Remove</button>
                       </div>
                     </div>
@@ -779,6 +794,7 @@ export function Builder() {
                             ↓
                           </button>
                         )}
+                        <button className="btn-move" onClick={() => duplicateEntry('education', i)} title="Duplicate">⧉</button>
                         <button className="btn-remove" onClick={() => removeEntry('education', i)}>Remove</button>
                       </div>
                     </div>
@@ -902,6 +918,7 @@ export function Builder() {
                             ↓
                           </button>
                         )}
+                        <button className="btn-move" onClick={() => duplicateEntry('projects', i)} title="Duplicate">⧉</button>
                         <button className="btn-remove" onClick={() => removeEntry('projects', i)}>Remove</button>
                       </div>
                     </div>
@@ -979,6 +996,7 @@ export function Builder() {
                             ↓
                           </button>
                         )}
+                        <button className="btn-move" onClick={() => duplicateEntry('certifications', i)} title="Duplicate">⧉</button>
                         <button className="btn-remove" onClick={() => removeEntry('certifications', i)}>Remove</button>
                       </div>
                     </div>
@@ -1040,6 +1058,7 @@ export function Builder() {
                             ↓
                           </button>
                         )}
+                        <button className="btn-move" onClick={() => duplicateEntry('languages', i)} title="Duplicate">⧉</button>
                         <button className="btn-remove" onClick={() => removeEntry('languages', i)}>Remove</button>
                       </div>
                     </div>
@@ -1065,6 +1084,68 @@ export function Builder() {
                   onClick={() => addEntry('languages', { lang: '', level: '' } as LanguageEntry)}
                 >
                   + Add Language
+                </button>
+              </div>
+
+              {/* Awards & Achievements */}
+              <div className="form-section" id="section-awards">
+                <div className="form-section-title">Awards & Achievements <span>(optional)</span></div>
+                {data.awards.map((award, i) => (
+                  <div className="entry-card" key={i}>
+                    <div className="entry-card-header">
+                      <div className="entry-card-title">Award {i + 1}</div>
+                      <div className="entry-card-actions">
+                        {i > 0 && (
+                          <button
+                            className="btn-move"
+                            onClick={() => moveEntry('awards', i, 'up')}
+                            aria-label="Move up"
+                            title="Move up"
+                          >
+                            ↑
+                          </button>
+                        )}
+                        {i < data.awards.length - 1 && (
+                          <button
+                            className="btn-move"
+                            onClick={() => moveEntry('awards', i, 'down')}
+                            aria-label="Move down"
+                            title="Move down"
+                          >
+                            ↓
+                          </button>
+                        )}
+                        <button className="btn-move" onClick={() => duplicateEntry('awards', i)} title="Duplicate">⧉</button>
+                        <button className="btn-remove" onClick={() => removeEntry('awards', i)}>Remove</button>
+                      </div>
+                    </div>
+                    <div className="form-row">
+                      <div className="form-group">
+                        <label className="form-label">Award Title</label>
+                        <input className="form-input" placeholder="Spot Award" value={award.title} onChange={(e) => updateEntry('awards', i, 'title', e.target.value)} />
+                      </div>
+                      <div className="form-group">
+                        <label className="form-label">Issuer</label>
+                        <input className="form-input" placeholder="Infosys" value={award.issuer} onChange={(e) => updateEntry('awards', i, 'issuer', e.target.value)} />
+                      </div>
+                    </div>
+                    <div className="form-row">
+                      <div className="form-group">
+                        <label className="form-label">Year</label>
+                        <input className="form-input" placeholder="2023" value={award.year} onChange={(e) => updateEntry('awards', i, 'year', e.target.value)} />
+                      </div>
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">Description (optional)</label>
+                      <textarea className="form-textarea" placeholder="Brief description of the award..." value={award.description} onChange={(e) => updateEntry('awards', i, 'description', e.target.value)} />
+                    </div>
+                  </div>
+                ))}
+                <button
+                  className="btn-add-entry"
+                  onClick={() => addEntry('awards', { title: '', issuer: '', year: '', description: '' } as AwardEntry)}
+                >
+                  + Add Award
                 </button>
               </div>
             </div>
