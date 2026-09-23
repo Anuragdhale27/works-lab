@@ -42,6 +42,9 @@ export function Builder() {
   const formPanelRef = useRef<HTMLDivElement>(null);
   const importInputRef = useRef<HTMLInputElement>(null);
 
+  // Track pending caret position for textarea focus restoration after state updates
+  const pendingCaretRef = useRef<{ textareaId: string; position: number } | null>(null);
+
   // Mobile-only Edit/Preview toggle. Ignored above the 900px breakpoint,
   // where both panels are always shown side by side.
   const [mobileView, setMobileView] = useState<'edit' | 'preview'>('edit');
@@ -145,6 +148,19 @@ export function Builder() {
     return () => ro.disconnect();
   }, [data, template]);
 
+  // Restore textarea caret position after state updates from bullet operations
+  useEffect(() => {
+    if (pendingCaretRef.current) {
+      const { textareaId, position } = pendingCaretRef.current;
+      const textarea = document.getElementById(textareaId) as HTMLTextAreaElement;
+      if (textarea) {
+        textarea.selectionStart = textarea.selectionEnd = position;
+        textarea.focus();
+      }
+      pendingCaretRef.current = null;
+    }
+  }, [data]);
+
   function updatePersonal(field: keyof ResumeData['personal'], value: string) {
     setData((d) => ({ ...d, personal: { ...d.personal, [field]: value } }));
   }
@@ -244,25 +260,15 @@ export function Builder() {
       // Insert bullet at start of current line (before cursor)
       const lineStart = lastNewline + 1;
       const newValue = text.substring(0, lineStart) + '• ' + text.substring(lineStart);
+      // Store pending caret position for restoration after state update
+      pendingCaretRef.current = { textareaId, position: lineStart + 2 };
       updateEntry(sectionKey, entryIndex, 'description', newValue);
-      // Move cursor after the bullet
-      setTimeout(() => {
-        const ta = document.getElementById(textareaId) as HTMLTextAreaElement;
-        if (ta) {
-          ta.selectionStart = ta.selectionEnd = lineStart + 2;
-        }
-      });
     } else {
       // Append bullet on new line
       const newValue = text + (text && !text.endsWith('\n') ? '\n' : '') + '• ';
+      // Store pending caret position for restoration after state update
+      pendingCaretRef.current = { textareaId, position: newValue.length };
       updateEntry(sectionKey, entryIndex, 'description', newValue);
-      setTimeout(() => {
-        const ta = document.getElementById(textareaId) as HTMLTextAreaElement;
-        if (ta) {
-          ta.selectionStart = ta.selectionEnd = newValue.length;
-          ta.focus();
-        }
-      });
     }
   }
 
@@ -285,21 +291,17 @@ export function Builder() {
       // Remove the bullet marker and continue on new line
       e.preventDefault();
       const newText = text.substring(0, lineStart) + '\n' + text.substring(start);
+      const textareaId = textarea.id;
+      pendingCaretRef.current = { textareaId, position: lineStart + 1 };
       updateEntry(sectionKey, entryIndex, 'description', newText);
-      setTimeout(() => {
-        textarea.value = newText;
-        textarea.selectionStart = textarea.selectionEnd = lineStart + 1;
-      });
     } else if (isLineStartWithBullet) {
       // Continue with a new bullet on next line
       e.preventDefault();
       const afterCursor = text.substring(start);
       const newText = text.substring(0, start) + '\n• ' + afterCursor;
+      const textareaId = textarea.id;
+      pendingCaretRef.current = { textareaId, position: start + 3 };
       updateEntry(sectionKey, entryIndex, 'description', newText);
-      setTimeout(() => {
-        textarea.value = newText;
-        textarea.selectionStart = textarea.selectionEnd = start + 3;
-      });
     }
   }
 
@@ -720,6 +722,7 @@ export function Builder() {
                           type="button"
                           className="btn-add-bullet"
                           onClick={() => handleAddBullet('experience', i, `exp-desc-${i}`)}
+                          onMouseDown={(e) => e.preventDefault()}
                           aria-label="Add bullet point"
                           title="Add bullet point"
                         >
@@ -922,6 +925,7 @@ export function Builder() {
                           type="button"
                           className="btn-add-bullet"
                           onClick={() => handleAddBullet('projects', i, `pr-desc-${i}`)}
+                          onMouseDown={(e) => e.preventDefault()}
                           aria-label="Add bullet point"
                           title="Add bullet point"
                         >
