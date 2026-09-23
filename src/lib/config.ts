@@ -9,7 +9,7 @@
 // ============================================================
 
 export const CONFIG = {
-  PAYMENT_LINK: 'https://superprofile.bio/vp/6ab0290bd066540014f50a18', // <- your payment link
+  PAYMENT_LINK: 'https://rzp.io/rzp/esmOUifo', // <- your payment link
   PRODUCT_PRICE: 149,
   CURRENCY: 'INR',
   SITE_NAME: 'Works Lab',
