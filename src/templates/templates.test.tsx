@@ -46,4 +46,16 @@ describe('template registry', () => {
       expect(result & Node.DOCUMENT_POSITION_FOLLOWING).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
     }
   });
+
+  it.each(TEMPLATE_KEYS)('%s template renders an award title when awards has one entry', (key) => {
+    const { Component } = TEMPLATES[key];
+    const testData = {
+      ...emptyResumeData,
+      awards: [
+        { title: 'Best Developer Award', issuer: 'Tech Org', year: '2023', description: 'For excellence in coding' },
+      ],
+    };
+    const { container } = render(<Component data={testData} />);
+    expect(container.textContent).toContain('Best Developer Award');
+  });
 });
