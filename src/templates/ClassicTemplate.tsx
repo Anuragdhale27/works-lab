@@ -1,5 +1,5 @@
 import type { ResumeData } from '../types/resume';
-import { multiline } from '../lib/multiline';
+import { Description } from './Description';
 
 export function ClassicTemplate({ data }: { data: ResumeData }) {
   const p = data.personal;
@@ -14,7 +14,7 @@ export function ClassicTemplate({ data }: { data: ResumeData }) {
       {data.summary && (
         <>
           <div className="rcls-section-title">Professional Summary</div>
-          <div className="rcls-desc" style={{ marginBottom: 'var(--r-sp-3)' }}>{multiline(data.summary)}</div>
+          <div className="rcls-desc" style={{ marginBottom: 'var(--r-sp-3)' }}><Description text={data.summary} /></div>
         </>
       )}
 
@@ -28,7 +28,7 @@ export function ClassicTemplate({ data }: { data: ResumeData }) {
                 <div className="rcls-exp-date">{exp.start} – {exp.end || 'Present'}</div>
               </div>
               <div className="rcls-exp-sub">{exp.location}</div>
-              <div className="rcls-desc">{multiline(exp.description)}</div>
+              <div className="rcls-desc"><Description text={exp.description} /></div>
             </div>
           ))}
         </>
@@ -66,7 +66,7 @@ export function ClassicTemplate({ data }: { data: ResumeData }) {
             <div className="rcls-exp-item" key={i}>
               <div className="rcls-exp-title">{pr.name || 'Project'}</div>
               <div className="rcls-exp-sub">{pr.tech}</div>
-              <div className="rcls-desc">{multiline(pr.description)}</div>
+              <div className="rcls-desc"><Description text={pr.description} /></div>
             </div>
           ))}
         </>

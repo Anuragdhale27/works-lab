@@ -11,15 +11,15 @@ function buildFaqItems(): FaqEntry[] {
   return [
   {
     q: `What does ₹${price} include?`,
-    a: `One-time access to all 4 resume templates and the resume builder. Fill in your details, preview in real time, and export your resume as a PDF whenever you like. No recurring charges.`,
+    a: `One-time access to all 6 resume templates and the resume builder. Fill in your details, preview in real time, and export your resume as a PDF whenever you like. No recurring charges.`,
   },
   {
     q: 'Can I use different templates?',
-    a: 'Yes. The builder has a template switcher right above the live preview — pick Modern, Classic, Minimal or Executive at any point and your entered details carry over automatically.',
+    a: 'Yes. The builder has a template switcher right above the live preview — pick from Modern, Classic, Minimal, Executive, Sidebar or Split at any point and your entered details carry over automatically.',
   },
   {
     q: 'Is the resume ATS-friendly?',
-    a: 'All four templates are built with clean, structured markup — no tables, text boxes or graphics that trip up applicant tracking systems. Standard section headings and readable fonts are used throughout.',
+    a: 'All six templates are built with clean, structured markup — no tables, text boxes or graphics that trip up applicant tracking systems. Standard section headings and readable fonts are used throughout.',
   },
   {
     q: 'Can I edit my information later?',
@@ -39,7 +39,7 @@ function buildFaqItems(): FaqEntry[] {
   },
   {
     q: 'Is there a subscription?',
-    a: `No. ₹${price} is a one-time payment for lifetime access to the builder and all four templates. There are no renewals or monthly charges.`,
+    a: `No. ₹${price} is a one-time payment for lifetime access to the builder and all six templates. There are no renewals or monthly charges.`,
   },
   {
     q: 'Can I use this resume for multiple applications?',

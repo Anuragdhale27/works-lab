@@ -21,7 +21,7 @@ export const sampleResumeData: ResumeData = {
       start: 'Jun 2022',
       end: 'Present',
       description:
-        'Led development of microservices architecture serving 500K+ daily users. Reduced API response time by 40% through caching and query optimisation.',
+        '• Led development of microservices architecture serving 500K+ daily users\n• Reduced API response time by 40% through caching and query optimisation\n• Mentored team of 3 junior engineers on best practices',
     },
     {
       company: 'Wipro',
@@ -29,7 +29,7 @@ export const sampleResumeData: ResumeData = {
       location: 'Hyderabad',
       start: 'Jul 2020',
       end: 'May 2022',
-      description: 'Built RESTful APIs and React dashboards for enterprise clients in the BFSI sector.',
+      description: '• Built RESTful APIs and React dashboards for enterprise clients in the BFSI sector\n• Improved database query performance by 35% with indexing strategies',
     },
   ],
   education: [
@@ -48,7 +48,7 @@ export const sampleResumeData: ResumeData = {
       name: 'E-Commerce Platform',
       tech: 'React, Node.js, MongoDB',
       url: 'github.com/rahuls/shop',
-      description: 'Full-stack marketplace with payment integration and real-time inventory.',
+      description: '• Full-stack marketplace with payment integration and real-time inventory\n• Handled 10K+ concurrent users with optimized database queries\n• Integrated Stripe for secure payment processing',
     },
   ],
   certifications: [{ name: 'AWS Cloud Practitioner', org: 'Amazon Web Services', year: '2023', url: '' }],

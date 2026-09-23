@@ -1,5 +1,5 @@
 import type { ResumeData } from '../types/resume';
-import { multiline } from '../lib/multiline';
+import { Description } from './Description';
 
 export function ModernTemplate({ data }: { data: ResumeData }) {
   const p = data.personal;
@@ -23,7 +23,7 @@ export function ModernTemplate({ data }: { data: ResumeData }) {
         {data.summary && (
           <div className="rmod-section">
             <div className="rmod-section-title">Professional Summary</div>
-            <div className="rmod-exp-desc">{multiline(data.summary)}</div>
+            <div className="rmod-exp-desc"><Description text={data.summary} /></div>
           </div>
         )}
 
@@ -44,7 +44,7 @@ export function ModernTemplate({ data }: { data: ResumeData }) {
                   {exp.company}
                   {exp.location ? ` · ${exp.location}` : ''}
                 </div>
-                {exp.description && <div className="rmod-exp-desc">{multiline(exp.description)}</div>}
+                {exp.description && <div className="rmod-exp-desc"><Description text={exp.description} /></div>}
               </div>
             ))}
           </div>
@@ -90,7 +90,7 @@ export function ModernTemplate({ data }: { data: ResumeData }) {
                   {pr.url && <div className="rmod-exp-date" style={{ color: '#2563eb' }}>{pr.url}</div>}
                 </div>
                 {pr.tech && <div className="rmod-exp-company">{pr.tech}</div>}
-                {pr.description && <div className="rmod-exp-desc">{multiline(pr.description)}</div>}
+                {pr.description && <div className="rmod-exp-desc"><Description text={pr.description} /></div>}
               </div>
             ))}
           </div>

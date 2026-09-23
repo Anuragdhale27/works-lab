@@ -1,5 +1,5 @@
 import type { ResumeData } from '../types/resume';
-import { multiline } from '../lib/multiline';
+import { Description } from './Description';
 
 export function ExecutiveTemplate({ data }: { data: ResumeData }) {
   const p = data.personal;
@@ -19,7 +19,7 @@ export function ExecutiveTemplate({ data }: { data: ResumeData }) {
           <div className="rexe-section">
             <div className="rexe-section-title">Professional Summary</div>
             <hr className="rexe-divider" />
-            <div className="rexe-desc">{multiline(data.summary)}</div>
+            <div className="rexe-desc"><Description text={data.summary} /></div>
           </div>
         )}
 
@@ -39,7 +39,7 @@ export function ExecutiveTemplate({ data }: { data: ResumeData }) {
                   {exp.company}
                   {exp.location ? ` · ${exp.location}` : ''}
                 </div>
-                <div className="rexe-desc">{multiline(exp.description)}</div>
+                <div className="rexe-desc"><Description text={exp.description} /></div>
               </div>
             ))}
           </div>
@@ -80,7 +80,7 @@ export function ExecutiveTemplate({ data }: { data: ResumeData }) {
               <div className="rexe-item" key={i}>
                 <div className="rexe-exp-title">{pr.name || 'Project'}</div>
                 {pr.tech && <div className="rexe-exp-sub">{pr.tech}</div>}
-                <div className="rexe-desc">{multiline(pr.description)}</div>
+                <div className="rexe-desc"><Description text={pr.description} /></div>
               </div>
             ))}
           </div>
