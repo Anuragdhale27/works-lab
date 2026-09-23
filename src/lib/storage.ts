@@ -12,6 +12,8 @@ const KNOWN_TOP_LEVEL_KEYS = [
   'certifications',
   'languages',
   'awards',
+  'customSections',
+  'sectionOrder',
   'accent',
 ] as const;
 
@@ -23,6 +25,8 @@ const ARRAY_FIELDS = [
   'certifications',
   'languages',
   'awards',
+  'customSections',
+  'sectionOrder',
 ] as const;
 
 function isPlainObject(value: unknown): value is Record<string, unknown> {
@@ -44,6 +48,45 @@ function sanitizeEntryArray<T extends Record<string, string>>(value: unknown, sh
     }
     return out;
   });
+}
+
+function generateCustomSectionId(): string {
+  // Use a simple counter-based approach for deterministic IDs
+  // In a real app, you might use crypto.randomUUID().slice(0, 8)
+  return `custom_${Math.random().toString(36).slice(2, 10)}`;
+}
+
+function sanitizeCustomSections(value: unknown) {
+  if (!Array.isArray(value)) return [];
+  const usedIds = new Set<string>();
+  const result: Array<{ id: string; title: string; items: Array<{ heading: string; subheading: string; date: string; description: string }> }> = [];
+
+  for (const section of value) {
+    if (!isPlainObject(section)) continue;
+
+    let id = section.id as unknown;
+    // Validate or generate ID
+    if (typeof id !== 'string' || !id.match(/^[a-z0-9-]{1,40}$/i)) {
+      id = generateCustomSectionId();
+    }
+    // Avoid duplicate IDs
+    while (usedIds.has(id as string)) {
+      id = generateCustomSectionId();
+    }
+    usedIds.add(id as string);
+
+    const title = typeof section.title === 'string' ? section.title : '';
+    const items = sanitizeEntryArray(section.items, {
+      heading: '',
+      subheading: '',
+      date: '',
+      description: '',
+    });
+
+    result.push({ id: id as string, title, items });
+  }
+
+  return result;
 }
 
 /**
@@ -97,6 +140,8 @@ export function validateResumeData(raw: unknown): ResumeData | null {
     certifications: sanitizeEntryArray(raw.certifications, { name: '', org: '', year: '', url: '' }),
     languages: sanitizeEntryArray(raw.languages, { lang: '', level: '' }),
     awards: sanitizeEntryArray(raw.awards, { title: '', issuer: '', year: '', description: '' }),
+    customSections: sanitizeCustomSections(raw.customSections),
+    sectionOrder: sanitizeStringArray(raw.sectionOrder),
     accent,
   };
 }

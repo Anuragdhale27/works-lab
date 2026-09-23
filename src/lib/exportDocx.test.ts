@@ -85,6 +85,8 @@ describe('exportDocx', () => {
           description: 'For outstanding performance',
         },
       ],
+      customSections: [],
+      sectionOrder: [],
       accent: '#7f1d1d',
     };
 
@@ -116,6 +118,8 @@ describe('exportDocx', () => {
       certifications: [],
       languages: [],
       awards: [],
+      customSections: [],
+      sectionOrder: [],
     };
 
     await expect(exportResumeToDocx(minimalData)).resolves.toBeUndefined();
@@ -141,6 +145,8 @@ describe('exportDocx', () => {
       certifications: [],
       languages: [],
       awards: [],
+      customSections: [],
+      sectionOrder: [],
     };
 
     await expect(exportResumeToDocx(dataWithBullets)).resolves.toBeUndefined();

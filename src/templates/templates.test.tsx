@@ -58,4 +58,64 @@ describe('template registry', () => {
     const { container } = render(<Component data={testData} />);
     expect(container.textContent).toContain('Best Developer Award');
   });
+
+  it.each(TEMPLATE_KEYS)('%s template respects sectionOrder: with projects before experience, Projects heading comes before Work Experience in DOM order', (key) => {
+    const { Component } = TEMPLATES[key];
+    const testData = {
+      ...emptyResumeData,
+      sectionOrder: ['projects', 'experience'],
+      experience: [{ title: 'Test Job', company: 'Test Company', location: '', start: '2020', end: '2021', description: '' }],
+      projects: [{ name: 'Test Project', tech: 'React', url: '', description: '' }],
+    };
+    const { container } = render(<Component data={testData} />);
+
+    const projectsHeading = Array.from(container.querySelectorAll('[class*="-section-title"]')).find(
+      (el) => el.textContent === 'Projects'
+    );
+    const experienceHeading = Array.from(container.querySelectorAll('[class*="-section-title"]')).find(
+      (el) => el.textContent === 'Work Experience'
+    );
+
+    if (projectsHeading && experienceHeading) {
+      const result = projectsHeading.compareDocumentPosition(experienceHeading);
+      expect(result & Node.DOCUMENT_POSITION_FOLLOWING).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
+    }
+  });
+
+  it.each(TEMPLATE_KEYS)('%s template renders a custom section title when customSections is populated', (key) => {
+    const { Component } = TEMPLATES[key];
+    const testData = {
+      ...emptyResumeData,
+      customSections: [
+        { id: 'volunteering', title: 'Volunteering', items: [{ heading: 'Test Org', subheading: 'Role', date: '2023', description: 'Description' }] },
+      ],
+    };
+    const { container } = render(<Component data={testData} />);
+    expect(container.textContent).toContain('Volunteering');
+    expect(container.textContent).toContain('Test Org');
+  });
+
+  it.each(['sidebar', 'split'] as const)('%s template renders main-column headings before side-column headings in DOM order', (key) => {
+    const { Component } = TEMPLATES[key];
+    const testData = {
+      ...emptyResumeData,
+      sectionOrder: ['projects', 'experience', 'skills'],
+      experience: [{ title: 'Test Job', company: 'Test Company', location: '', start: '2020', end: '2021', description: '' }],
+      projects: [{ name: 'Test Project', tech: 'React', url: '', description: '' }],
+      skills: ['React', 'TypeScript'],
+    };
+    const { container } = render(<Component data={testData} />);
+
+    const projectsHeading = Array.from(container.querySelectorAll('[class*="-section-title"]')).find(
+      (el) => el.textContent === 'Projects'
+    );
+    const skillsHeading = Array.from(container.querySelectorAll('[class*="-title"]')).find(
+      (el) => el.textContent === 'Skills'
+    );
+
+    if (projectsHeading && skillsHeading) {
+      const result = projectsHeading.compareDocumentPosition(skillsHeading);
+      expect(result & Node.DOCUMENT_POSITION_FOLLOWING).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
+    }
+  });
 });

@@ -54,6 +54,21 @@ export interface AwardEntry {
   description: string;
 }
 
+export interface CustomItem {
+  heading: string;
+  subheading: string;
+  date: string;
+  description: string;
+}
+
+export interface CustomSection {
+  id: string;
+  title: string;
+  items: CustomItem[];
+}
+
+export type BuiltInSectionKey = 'summary' | 'experience' | 'education' | 'skills' | 'projects' | 'certifications' | 'languages' | 'awards';
+
 export interface ResumeData {
   personal: PersonalInfo;
   summary: string;
@@ -64,6 +79,8 @@ export interface ResumeData {
   certifications: CertificationEntry[];
   languages: LanguageEntry[];
   awards: AwardEntry[];
+  customSections: CustomSection[];
+  sectionOrder: string[];
   accent?: string;
 }
 
@@ -86,6 +103,8 @@ export const emptyResumeData: ResumeData = {
   certifications: [],
   languages: [],
   awards: [],
+  customSections: [],
+  sectionOrder: [],
   accent: undefined,
 };
 
