@@ -1,24 +1,11 @@
 # Works Lab
 
-[![Deploy to GitHub Pages](https://github.com/Anuragdhale27/works-lab/actions/workflows/deploy.yml/badge.svg)](https://github.com/Anuragdhale27/works-lab/actions/workflows/deploy.yml)
+[![Deploy](https://github.com/Anuragdhale27/works-lab/actions/workflows/deploy.yml/badge.svg)](https://github.com/Anuragdhale27/works-lab/actions/workflows/deploy.yml)
 [![Website](https://img.shields.io/website?url=https%3A%2F%2Fresume.workslab.in&label=resume.workslab.in)](https://resume.workslab.in)
-[![Last commit](https://img.shields.io/github/last-commit/Anuragdhale27/works-lab)](https://github.com/Anuragdhale27/works-lab/commits/main)
-[![Open issues](https://img.shields.io/github/issues/Anuragdhale27/works-lab)](https://github.com/Anuragdhale27/works-lab/issues)
-[![Open PRs](https://img.shields.io/github/issues-pr/Anuragdhale27/works-lab)](https://github.com/Anuragdhale27/works-lab/pulls)
-
 ![React 19](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=white)
 ![TypeScript](https://img.shields.io/badge/TypeScript-6-3178C6?logo=typescript&logoColor=white)
 ![Vite 8](https://img.shields.io/badge/Vite-8-646CFF?logo=vite&logoColor=white)
-![React Router 7](https://img.shields.io/badge/React_Router-7-CA4245?logo=reactrouter&logoColor=white)
-![Bun](https://img.shields.io/badge/Bun-package_manager-000000?logo=bun&logoColor=white)
-![Vitest](https://img.shields.io/badge/tested_with-Vitest-6E9F18?logo=vitest&logoColor=white)
-![ESLint](https://img.shields.io/badge/lint-ESLint-4B32C3?logo=eslint&logoColor=white)
-![GitHub Pages](https://img.shields.io/badge/hosted_on-GitHub_Pages-222222?logo=githubpages&logoColor=white)
-
-![Templates](https://img.shields.io/badge/resume_templates-6-0E7A5A)
-![Price](https://img.shields.io/badge/price-%E2%82%B9149_one--time-0E7A5A)
-![No backend](https://img.shields.io/badge/data-stays_in_your_browser-0E7A5A)
-![ATS](https://img.shields.io/badge/PDF-real_selectable_text-0E7A5A)
+[![License: All rights reserved](https://img.shields.io/badge/license-all_rights_reserved-red)](LICENSE)
 
 Works Lab is a resume builder for the Indian job market: ATS-friendly resume templates, a guided
 form with a live A4 preview, and PDF or Word export, all for a one-time payment with no
@@ -183,3 +170,8 @@ deploy `dist/` to GitHub Pages. `public/CNAME` keeps the custom domain.
   `src/templates/`, then register it in `src/templates/index.ts`. The builder, gallery, template
   page, page metadata and sitemap all pick it up automatically.
 - **Page metadata:** `src/seo/routes.ts`.
+
+## License
+
+Copyright (c) 2026 Works Lab. All rights reserved. The source is publicly visible, but it may not
+be copied, modified, hosted or sold without written permission. See [LICENSE](LICENSE).
