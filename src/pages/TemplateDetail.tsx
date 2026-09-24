@@ -59,8 +59,8 @@ export function TemplateDetail() {
               </h2>
               <p style={{ fontSize: '0.95rem', color: 'var(--gray-600)', lineHeight: 1.7, marginBottom: '24px' }}>
                 {templateKey === 'modern' || templateKey === 'classic' || templateKey === 'minimal' || templateKey === 'executive'
-                  ? 'This single-column layout is read top-to-bottom by applicant tracking systems, ensuring every word reaches recruiters.'
-                  : 'This template uses a two-column layout. Most ATS systems read left-to-right, but some may mix columns. Single-column templates like Modern, Classic, Minimal, and Executive are the safest choice for ATS compatibility.'}
+                  ? 'Single-column layout with standard section headings. The exported PDF contains real, selectable text in reading order, so applicant tracking systems can parse it top to bottom.'
+                  : 'Two-column layout. The main content comes first in the exported PDF, but some applicant tracking systems may still mix the two columns. Modern, Classic, Minimal and Executive are single-column and the safest choice.'}
               </p>
 
               <div className="template-price-large">₹{CONFIG.PRODUCT_PRICE}</div>
