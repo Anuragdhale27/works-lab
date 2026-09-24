@@ -1,7 +1,6 @@
 import { Link, Navigate, useParams } from 'react-router-dom';
 import { Layout } from '../components/Layout';
 import { TemplatePreview } from '../components/TemplatePreview';
-import { TemplateCard } from '../components/TemplateCard';
 import { TEMPLATE_KEYS, TEMPLATES, isTemplateKey } from '../templates';
 import { CONFIG, goToPayment } from '../lib/config';
 
@@ -13,7 +12,7 @@ export function TemplateDetail() {
   }
 
   const template = TEMPLATES[templateKey];
-  const others = TEMPLATE_KEYS.filter((k) => k !== templateKey).slice(0, 3);
+  const others = TEMPLATE_KEYS.filter((k) => k !== templateKey);
 
   return (
     <Layout>
@@ -38,25 +37,34 @@ export function TemplateDetail() {
                 {template.name}
               </h1>
 
-              <div className="template-meta">
-                <span style={{ fontSize: '0.88rem', color: 'var(--gray-600)' }}>Best for: {template.best}</span>
-              </div>
+              <h2 style={{ fontSize: '1rem', fontWeight: '600', color: 'var(--gray-700)', marginTop: '16px', marginBottom: '8px' }}>
+                Best for: {template.best}
+              </h2>
 
               <p style={{ fontSize: '0.95rem', color: 'var(--gray-600)', lineHeight: 1.7, marginBottom: '24px' }}>
                 {template.description}
               </p>
 
+              <h2 style={{ fontSize: '1rem', fontWeight: '600', color: 'var(--gray-900)', marginTop: '24px', marginBottom: '12px' }}>
+                Key Features
+              </h2>
+              <ul className="template-features">
+                {template.features.map((feature, idx) => (
+                  <li key={idx}>{feature}</li>
+                ))}
+              </ul>
+
+              <h2 style={{ fontSize: '1rem', fontWeight: '600', color: 'var(--gray-900)', marginTop: '24px', marginBottom: '12px' }}>
+                ATS-Friendly Design
+              </h2>
+              <p style={{ fontSize: '0.95rem', color: 'var(--gray-600)', lineHeight: 1.7, marginBottom: '24px' }}>
+                {templateKey === 'modern' || templateKey === 'classic' || templateKey === 'minimal' || templateKey === 'executive'
+                  ? 'This single-column layout is read top-to-bottom by applicant tracking systems, ensuring every word reaches recruiters.'
+                  : 'This template uses a two-column layout. Most ATS systems read left-to-right, but some may mix columns. Single-column templates like Modern, Classic, Minimal, and Executive are the safest choice for ATS compatibility.'}
+              </p>
+
               <div className="template-price-large">₹{CONFIG.PRODUCT_PRICE}</div>
               <div className="template-price-note">One-time payment · Instant access · No subscription</div>
-
-              <ul className="template-features">
-                <li>ATS-friendly HTML structure</li>
-                <li>Professional, recruiter-tested layout</li>
-                <li>Easy guided form — no design skills needed</li>
-                <li>Live preview as you type</li>
-                <li>Download as clean A4 PDF</li>
-                <li>Saved to your browser — edit any time</li>
-              </ul>
 
               <button className="btn btn-primary btn-lg" style={{ width: '100%' }} onClick={() => goToPayment(template.key)}>
                 Use This Template – ₹{CONFIG.PRODUCT_PRICE}
@@ -69,16 +77,41 @@ export function TemplateDetail() {
         </div>
       </section>
 
-      {/* Other templates */}
+      {/* Related templates */}
       <section style={{ background: 'var(--gray-100)', padding: '60px 0' }}>
         <div className="container">
           <h2 className="section-title" style={{ fontSize: '1.6rem', marginBottom: '32px' }}>
-            Other templates
+            Related Templates
           </h2>
-          <div className="templates-grid">
-            {others.map((key) => (
-              <TemplateCard key={key} template={TEMPLATES[key]} />
-            ))}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '24px' }}>
+            {others.map((key) => {
+              const other = TEMPLATES[key];
+              return (
+                <Link
+                  key={key}
+                  to={`/template/${key}`}
+                  style={{
+                    display: 'block',
+                    padding: '24px',
+                    background: 'white',
+                    borderRadius: '8px',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+                    textDecoration: 'none',
+                    color: 'inherit',
+                  }}
+                >
+                  <h3 style={{ fontSize: '1.1rem', fontWeight: '600', marginBottom: '8px' }}>
+                    {other.name} resume template
+                  </h3>
+                  <p style={{ fontSize: '0.9rem', color: 'var(--gray-600)', marginBottom: '12px' }}>
+                    Best for: {other.best}
+                  </p>
+                  <p style={{ fontSize: '0.9rem', color: 'var(--gray-500)' }}>
+                    View details →
+                  </p>
+                </Link>
+              );
+            })}
           </div>
         </div>
       </section>

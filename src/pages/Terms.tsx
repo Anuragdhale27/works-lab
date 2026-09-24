@@ -10,16 +10,16 @@ export function Terms() {
           </h1>
           <p className="legal-updated">By using Works Lab, you agree to these terms.</p>
 
-          <h3>Product</h3>
+          <h2 style={{ fontSize: '1.2rem', marginTop: '24px', marginBottom: '12px' }}>Product</h2>
           <p>
             Works Lab provides digital resume templates for personal, professional use. The ₹149 fee grants you
             access to use the builder and download your resume.
           </p>
 
-          <h3>Permitted use</h3>
+          <h2 style={{ fontSize: '1.2rem', marginTop: '24px', marginBottom: '12px' }}>Permitted use</h2>
           <p>Templates may be used for your own job applications. You may not resell or redistribute the templates.</p>
 
-          <h3>Contact</h3>
+          <h2 style={{ fontSize: '1.2rem', marginTop: '24px', marginBottom: '12px' }}>Contact</h2>
           <p>
             <a href="mailto:adwork895@gmail.com">adwork895@gmail.com</a>
           </p>

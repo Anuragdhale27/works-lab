@@ -10,16 +10,16 @@ export function Privacy() {
           </h1>
           <p className="legal-updated">Last updated: January 2025</p>
 
-          <h3>What data we collect</h3>
+          <h2 style={{ fontSize: '1.2rem', marginTop: '24px', marginBottom: '12px' }}>What data we collect</h2>
           <p>
             Works Lab does not collect, store, or transmit your resume data. All information you enter in the resume
             builder is stored locally in your browser using localStorage and never sent to any server.
           </p>
 
-          <h3>Payment data</h3>
+          <h2 style={{ fontSize: '1.2rem', marginTop: '24px', marginBottom: '12px' }}>Payment data</h2>
           <p>Payments are processed by our payment provider. Works Lab does not store your payment card details.</p>
 
-          <h3>Contact</h3>
+          <h2 style={{ fontSize: '1.2rem', marginTop: '24px', marginBottom: '12px' }}>Contact</h2>
           <p>
             For any privacy questions, email us at <a href="mailto:adwork895@gmail.com">adwork895@gmail.com</a>
           </p>
