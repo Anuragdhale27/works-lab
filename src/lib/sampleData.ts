@@ -56,4 +56,27 @@ export const sampleResumeData: ResumeData = {
     { lang: 'English', level: 'Professional' },
     { lang: 'Hindi', level: 'Native' },
   ],
+  awards: [
+    {
+      title: 'Spot Award',
+      issuer: 'Infosys',
+      year: '2023',
+      description: 'Recognized for excellence in microservices architecture design and technical leadership',
+    },
+  ],
+  customSections: [
+    {
+      id: 'volunteering',
+      title: 'Volunteering',
+      items: [
+        {
+          heading: 'Teach For India',
+          subheading: 'Weekend Mentor',
+          date: '2021 – Present',
+          description: '• Mentored 12 students in coding basics\n• Developed curriculum for Python fundamentals',
+        },
+      ],
+    },
+  ],
+  sectionOrder: [],
 };

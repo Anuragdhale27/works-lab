@@ -47,6 +47,28 @@ export interface LanguageEntry {
   level: string;
 }
 
+export interface AwardEntry {
+  title: string;
+  issuer: string;
+  year: string;
+  description: string;
+}
+
+export interface CustomItem {
+  heading: string;
+  subheading: string;
+  date: string;
+  description: string;
+}
+
+export interface CustomSection {
+  id: string;
+  title: string;
+  items: CustomItem[];
+}
+
+export type BuiltInSectionKey = 'summary' | 'experience' | 'education' | 'skills' | 'projects' | 'certifications' | 'languages' | 'awards';
+
 export interface ResumeData {
   personal: PersonalInfo;
   summary: string;
@@ -56,6 +78,10 @@ export interface ResumeData {
   projects: ProjectEntry[];
   certifications: CertificationEntry[];
   languages: LanguageEntry[];
+  awards: AwardEntry[];
+  customSections: CustomSection[];
+  sectionOrder: string[];
+  accent?: string;
 }
 
 export const emptyResumeData: ResumeData = {
@@ -76,6 +102,10 @@ export const emptyResumeData: ResumeData = {
   projects: [],
   certifications: [],
   languages: [],
+  awards: [],
+  customSections: [],
+  sectionOrder: [],
+  accent: undefined,
 };
 
 export type TemplateKey = 'modern' | 'classic' | 'minimal' | 'executive' | 'sidebar' | 'split';

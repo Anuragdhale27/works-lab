@@ -3,7 +3,10 @@ import { createPortal } from 'react-dom';
 import { useSearchParams } from 'react-router-dom';
 import { Link } from 'react-router-dom';
 import type {
+  AwardEntry,
   CertificationEntry,
+  CustomItem,
+  CustomSection,
   EducationEntry,
   ExperienceEntry,
   LanguageEntry,
@@ -13,11 +16,15 @@ import type {
 import { emptyResumeData, type TemplateKey } from '../types/resume';
 import { TEMPLATES, isTemplateKey } from '../templates';
 import { loadResumeData, saveResumeData, validateResumeData } from '../lib/storage';
+import { duplicateEntry } from '../lib/duplication';
+import { useHistoryState } from '../hooks/useHistoryState';
 import { SkipLink } from '../components/SkipLink';
 import { useToast } from '../components/ToastProvider';
 import { SectionNav } from '../components/SectionNav';
 import { sampleResumeData } from '../lib/sampleData';
 import { computeOverallProgress, isResumeDataEmpty } from '../lib/completeness';
+import { exportResumeToDocx } from '../lib/exportDocx';
+import { resolveSectionOrder, moveSection as moveSectionOrder } from '../lib/sectionOrder';
 
 const LEVELS = ['Native', 'Fluent', 'Professional', 'Conversational', 'Basic'];
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -32,11 +39,14 @@ export function Builder() {
   const [searchParams] = useSearchParams();
   const { showToast } = useToast();
 
-  const [data, setData] = useState<ResumeData>(emptyResumeData);
+  const [data, setDataRaw, canUndo, canRedo, undo, redo] = useHistoryState<ResumeData>(() => loadResumeData());
   const [template, setTemplate] = useState<TemplateKey>(() => {
     const t = searchParams.get('template');
     return isTemplateKey(t ?? undefined) ? (t as TemplateKey) : 'modern';
   });
+
+  // Wrapper around setDataRaw to maintain the signature and type compatibility
+  const setData = setDataRaw;
   const previewRef = useRef<HTMLDivElement>(null);
   const wrapperRef = useRef<HTMLDivElement>(null);
   const formPanelRef = useRef<HTMLDivElement>(null);
@@ -76,11 +86,6 @@ export function Builder() {
   const [savedAt, setSavedAt] = useState<Date | null>(null);
   const saveTimeoutRef = useRef<number | undefined>(undefined);
   const isFirstDataEffect = useRef(true);
-
-  // Load persisted data on mount only.
-  useEffect(() => {
-    setData(loadResumeData());
-  }, []);
 
   // Debounced persist on every change, with an honest saving/saved/error state.
   useEffect(() => {
@@ -161,6 +166,51 @@ export function Builder() {
     }
   }, [data]);
 
+  // Keyboard shortcuts for undo/redo
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      const isMac = /Mac|iPhone|iPad|iPod/.test(navigator.platform);
+      const modifier = isMac ? e.metaKey : e.ctrlKey;
+
+      // Check if focus is on an input, textarea, select, or contenteditable
+      const target = e.target as HTMLElement | null;
+      const isFormElement =
+        target instanceof HTMLInputElement ||
+        target instanceof HTMLTextAreaElement ||
+        target instanceof HTMLSelectElement ||
+        target?.contentEditable === 'true';
+
+      if (isFormElement) {
+        // Let the browser's native undo/redo handle it within the text input
+        return;
+      }
+
+      // Undo: Ctrl+Z (Windows/Linux) or Cmd+Z (Mac)
+      if (modifier && e.key.toLowerCase() === 'z' && !e.shiftKey) {
+        e.preventDefault();
+        if (canUndo) undo();
+        return;
+      }
+
+      // Redo: Ctrl+Shift+Z (Windows/Linux) or Cmd+Shift+Z (Mac)
+      if (modifier && e.key.toLowerCase() === 'z' && e.shiftKey) {
+        e.preventDefault();
+        if (canRedo) redo();
+        return;
+      }
+
+      // Redo: Ctrl+Y (Windows/Linux) — Mac users typically don't use this, but support it anyway
+      if (modifier && e.key.toLowerCase() === 'y' && !e.shiftKey) {
+        e.preventDefault();
+        if (canRedo) redo();
+        return;
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [canUndo, canRedo, undo, redo]);
+
   function updatePersonal(field: keyof ResumeData['personal'], value: string) {
     setData((d) => ({ ...d, personal: { ...d.personal, [field]: value } }));
   }
@@ -198,14 +248,15 @@ export function Builder() {
   }
 
   // Generic helpers for repeatable array sections.
-  function addEntry<K extends 'experience' | 'education' | 'projects' | 'certifications' | 'languages'>(
+  function addEntry<K extends 'experience' | 'education' | 'projects' | 'certifications' | 'languages' | 'awards'>(
     key: K,
     entry: ResumeData[K][number],
   ) {
-    setData((d) => ({ ...d, [key]: [...d[key], entry] } as ResumeData));
+    // Structural operation: always create new history entry
+    setData((d) => ({ ...d, [key]: [...d[key], entry] } as ResumeData), true);
   }
 
-  function updateEntry<K extends 'experience' | 'education' | 'projects' | 'certifications' | 'languages'>(
+  function updateEntry<K extends 'experience' | 'education' | 'projects' | 'certifications' | 'languages' | 'awards'>(
     key: K,
     index: number,
     field: string,
@@ -218,29 +269,45 @@ export function Builder() {
     });
   }
 
-  function removeEntry<K extends 'experience' | 'education' | 'projects' | 'certifications' | 'languages'>(
+  function removeEntry<K extends 'experience' | 'education' | 'projects' | 'certifications' | 'languages' | 'awards'>(
     key: K,
     index: number,
   ) {
-    setData((d) => {
-      const list = [...(d[key] as unknown[])];
-      list.splice(index, 1);
-      return { ...d, [key]: list } as ResumeData;
-    });
+    // Structural operation: always create new history entry
+    setData(
+      (d) => {
+        const list = [...(d[key] as unknown[])];
+        list.splice(index, 1);
+        return { ...d, [key]: list } as ResumeData;
+      },
+      true
+    );
   }
 
-  function moveEntry<K extends 'experience' | 'education' | 'projects' | 'certifications' | 'languages'>(
+  function moveEntry<K extends 'experience' | 'education' | 'projects' | 'certifications' | 'languages' | 'awards'>(
     key: K,
     index: number,
     direction: 'up' | 'down',
   ) {
-    setData((d) => {
-      const list = [...(d[key] as unknown[])];
-      const newIndex = direction === 'up' ? index - 1 : index + 1;
-      if (newIndex < 0 || newIndex >= list.length) return d;
-      [list[index], list[newIndex]] = [list[newIndex], list[index]];
-      return { ...d, [key]: list } as ResumeData;
-    });
+    // Structural operation: always create new history entry
+    setData(
+      (d) => {
+        const list = [...(d[key] as unknown[])];
+        const newIndex = direction === 'up' ? index - 1 : index + 1;
+        if (newIndex < 0 || newIndex >= list.length) return d;
+        [list[index], list[newIndex]] = [list[newIndex], list[index]];
+        return { ...d, [key]: list } as ResumeData;
+      },
+      true
+    );
+  }
+
+  function handleDuplicateEntry<K extends 'experience' | 'education' | 'projects' | 'certifications' | 'languages' | 'awards'>(
+    key: K,
+    index: number,
+  ) {
+    // Structural operation: always create new history entry
+    setData((d) => duplicateEntry(d, key, index), true);
   }
 
   function handleAddBullet(
@@ -310,16 +377,16 @@ export function Builder() {
       const ok = window.confirm('This will replace your current entries with the example resume. Continue?');
       if (!ok) return;
     }
-    setData(sampleResumeData);
+    setData(sampleResumeData, true); // Force new history entry so user can undo
     showToast('Example resume loaded — edit it to make it yours.');
   }
 
   function clearEverything() {
-    const ok = window.confirm('This will clear everything you’ve entered. Continue?');
+    const ok = window.confirm("This will clear everything you’ve entered. Continue?");
     if (!ok) return;
-    setData(emptyResumeData);
+    setData(emptyResumeData, true); // Force new history entry so user can undo
     setTouched(new Set());
-    showToast('Form cleared.');
+    showToast("Form cleared.");
   }
 
   function exportData() {
@@ -335,6 +402,17 @@ export function Builder() {
     a.remove();
     URL.revokeObjectURL(url);
     showToast('Resume data exported.');
+  }
+
+  async function exportDocxFile() {
+    try {
+      showToast('Generating Word document...');
+      await exportResumeToDocx(data);
+      showToast('Resume exported as .docx');
+    } catch (err) {
+      console.error('Failed to export docx:', err);
+      showToast('Failed to export Word document.');
+    }
   }
 
   function triggerImport() {
@@ -360,7 +438,7 @@ export function Builder() {
         const ok = window.confirm('This will replace your current entries with the imported resume. Continue?');
         if (!ok) return;
       }
-      setData(validated);
+      setData(validated, true); // Force new history entry so user can undo
       setTouched(new Set());
       showToast('Resume imported.');
     };
@@ -379,6 +457,197 @@ export function Builder() {
 
   function removeSkill(i: number) {
     setData((d) => ({ ...d, skills: d.skills.filter((_, idx) => idx !== i) }));
+  }
+
+  // Generate a unique custom section ID (base36 timestamp + random)
+  function generateCustomSectionId(): string {
+    let id = Date.now().toString(36);
+    id += Math.random().toString(36).substring(2, 8);
+    return id.substring(0, 40).replace(/[^a-z0-9-]/g, '');
+  }
+
+  function addCustomSection() {
+    // Structural operation: always create new history entry
+    setData(
+      (d) => ({
+        ...d,
+        customSections: [
+          ...d.customSections,
+          {
+            id: generateCustomSectionId(),
+            title: '',
+            items: [],
+          } as CustomSection,
+        ],
+      }),
+      true
+    );
+  }
+
+  function updateCustomSection(customId: string, field: keyof CustomSection, value: unknown) {
+    setData((d) => ({
+      ...d,
+      customSections: d.customSections.map((cs) => (cs.id === customId ? { ...cs, [field]: value } : cs)),
+    }));
+  }
+
+  function removeCustomSection(customId: string) {
+    // Structural operation: always create new history entry
+    setData(
+      (d) => {
+        const filtered = d.customSections.filter((cs) => cs.id !== customId);
+        // Also remove from sectionOrder
+        const newOrder = d.sectionOrder.filter((key) => key !== `custom:${customId}`);
+        return { ...d, customSections: filtered, sectionOrder: newOrder };
+      },
+      true
+    );
+  }
+
+  function addCustomItem(customId: string) {
+    // Structural operation: always create new history entry
+    setData(
+      (d) => ({
+        ...d,
+        customSections: d.customSections.map((cs) =>
+          cs.id === customId ? { ...cs, items: [...cs.items, { heading: '', subheading: '', date: '', description: '' }] } : cs
+        ),
+      }),
+      true
+    );
+  }
+
+  function updateCustomItem(customId: string, itemIndex: number, field: keyof CustomItem, value: string) {
+    setData((d) => ({
+      ...d,
+      customSections: d.customSections.map((cs) =>
+        cs.id === customId
+          ? {
+              ...cs,
+              items: cs.items.map((item, idx) => (idx === itemIndex ? { ...item, [field]: value } : item)),
+            }
+          : cs
+      ),
+    }));
+  }
+
+  function removeCustomItem(customId: string, itemIndex: number) {
+    // Structural operation: always create new history entry
+    setData(
+      (d) => ({
+        ...d,
+        customSections: d.customSections.map((cs) =>
+          cs.id === customId
+            ? { ...cs, items: cs.items.filter((_, idx) => idx !== itemIndex) }
+            : cs
+        ),
+      }),
+      true
+    );
+  }
+
+  function moveCustomItem(customId: string, itemIndex: number, direction: 'up' | 'down') {
+    // Structural operation: always create new history entry
+    setData(
+      (d) => ({
+        ...d,
+        customSections: d.customSections.map((cs) => {
+          if (cs.id !== customId) return cs;
+          const newIndex = direction === 'up' ? itemIndex - 1 : itemIndex + 1;
+          if (newIndex < 0 || newIndex >= cs.items.length) return cs;
+          const newItems = [...cs.items];
+          [newItems[itemIndex], newItems[newIndex]] = [newItems[newIndex], newItems[itemIndex]];
+          return { ...cs, items: newItems };
+        }),
+      }),
+      true
+    );
+  }
+
+  function duplicateCustomItem(customId: string, itemIndex: number) {
+    // Structural operation: always create new history entry
+    setData(
+      (d) => ({
+        ...d,
+        customSections: d.customSections.map((cs) => {
+          if (cs.id !== customId) return cs;
+          if (itemIndex < 0 || itemIndex >= cs.items.length) return cs;
+          const copy = structuredClone(cs.items[itemIndex]);
+          const newItems = [...cs.items];
+          newItems.splice(itemIndex + 1, 0, copy);
+          return { ...cs, items: newItems };
+        }),
+      }),
+      true
+    );
+  }
+
+  function handleAddBulletCustom(customId: string, itemIndex: number, textareaId: string) {
+    const textarea = document.getElementById(textareaId) as HTMLTextAreaElement | null;
+    if (!textarea) return;
+    const start = textarea.selectionStart;
+    const text = textarea.value;
+    const beforeCursor = text.substring(0, start);
+    const lastNewline = beforeCursor.lastIndexOf('\n');
+    const isAtLineStart = lastNewline === -1 || beforeCursor.substring(lastNewline + 1).trim() === '';
+
+    if (isAtLineStart && lastNewline !== -1) {
+      // Insert bullet at start of current line (before cursor)
+      const lineStart = lastNewline + 1;
+      const newValue = text.substring(0, lineStart) + '• ' + text.substring(lineStart);
+      pendingCaretRef.current = { textareaId, position: lineStart + 2 };
+      updateCustomItem(customId, itemIndex, 'description', newValue);
+    } else {
+      // Append bullet on new line
+      const newValue = text + (text && !text.endsWith('\n') ? '\n' : '') + '• ';
+      pendingCaretRef.current = { textareaId, position: newValue.length };
+      updateCustomItem(customId, itemIndex, 'description', newValue);
+    }
+  }
+
+  function handleBulletKeydownCustom(
+    e: React.KeyboardEvent<HTMLTextAreaElement>,
+    customId: string,
+    itemIndex: number,
+  ) {
+    if (e.key !== 'Enter') return;
+    const textarea = e.currentTarget;
+    const start = textarea.selectionStart;
+    const text = textarea.value;
+    const beforeCursor = text.substring(0, start);
+    const lineStart = beforeCursor.lastIndexOf('\n') + 1;
+    const currentLine = text.substring(lineStart, start);
+    const isLineStartWithBullet = /^[•\-*–]\s/.test(currentLine.trim());
+    const isOnlyBullet = /^[•\-*–]\s*$/.test(currentLine);
+
+    if (isOnlyBullet) {
+      // Remove the bullet marker and continue on new line
+      e.preventDefault();
+      const newText = text.substring(0, lineStart) + '\n' + text.substring(start);
+      const textareaId = textarea.id;
+      pendingCaretRef.current = { textareaId, position: lineStart + 1 };
+      updateCustomItem(customId, itemIndex, 'description', newText);
+    } else if (isLineStartWithBullet) {
+      // Continue with a new bullet on next line
+      e.preventDefault();
+      const afterCursor = text.substring(start);
+      const newText = text.substring(0, start) + '\n• ' + afterCursor;
+      const textareaId = textarea.id;
+      pendingCaretRef.current = { textareaId, position: start + 3 };
+      updateCustomItem(customId, itemIndex, 'description', newText);
+    }
+  }
+
+  function handleMoveSection(sectionKey: string, direction: 'up' | 'down') {
+    // Structural operation: always create new history entry
+    const resolved = resolveSectionOrder(data);
+    const newOrder = moveSectionOrder(resolved, sectionKey, direction === 'up' ? -1 : 1);
+    setData((d) => ({ ...d, sectionOrder: newOrder }), true);
+  }
+
+  function handleResetSectionOrder() {
+    // Structural operation: always create new history entry
+    setData((d) => ({ ...d, sectionOrder: [] }), true);
   }
 
   // Print-based export: a second, print-only copy of the resume is portalled
@@ -417,6 +686,26 @@ export function Builder() {
                 <span className="builder-nav-template" style={{ fontSize: '0.82rem', color: 'var(--gray-600)' }}>
                   Template: <strong style={{ color: 'var(--black)' }}>{TEMPLATES[template].name}</strong>
                 </span>
+                <button
+                  className="btn-move"
+                  onClick={undo}
+                  disabled={!canUndo}
+                  aria-label="Undo"
+                  title={`Undo${canUndo ? ' (Ctrl+Z)' : ''}`}
+                  style={{ marginRight: '6px' }}
+                >
+                  ↶
+                </button>
+                <button
+                  className="btn-move"
+                  onClick={redo}
+                  disabled={!canRedo}
+                  aria-label="Redo"
+                  title={`Redo${canRedo ? ' (Ctrl+Shift+Z)' : ''}`}
+                  style={{ marginRight: '12px' }}
+                >
+                  ↷
+                </button>
                 <span
                   className={`save-indicator state-${saveState === 'idle' ? 'saved' : saveState}`}
                   role="status"
@@ -505,6 +794,9 @@ export function Builder() {
                 </button>
                 <button type="button" className="btn btn-outline btn-sm" onClick={exportData}>
                   Export JSON
+                </button>
+                <button type="button" className="btn btn-outline btn-sm" onClick={() => exportDocxFile()}>
+                  Export Word (.docx)
                 </button>
                 <button type="button" className="btn btn-outline btn-sm" onClick={triggerImport}>
                   Import JSON
@@ -650,6 +942,7 @@ export function Builder() {
                             ↓
                           </button>
                         )}
+                        <button className="btn-move" onClick={() => handleDuplicateEntry('experience', i)} title="Duplicate">⧉</button>
                         <button className="btn-remove" onClick={() => removeEntry('experience', i)}>Remove</button>
                       </div>
                     </div>
@@ -779,6 +1072,7 @@ export function Builder() {
                             ↓
                           </button>
                         )}
+                        <button className="btn-move" onClick={() => handleDuplicateEntry('education', i)} title="Duplicate">⧉</button>
                         <button className="btn-remove" onClick={() => removeEntry('education', i)}>Remove</button>
                       </div>
                     </div>
@@ -902,6 +1196,7 @@ export function Builder() {
                             ↓
                           </button>
                         )}
+                        <button className="btn-move" onClick={() => handleDuplicateEntry('projects', i)} title="Duplicate">⧉</button>
                         <button className="btn-remove" onClick={() => removeEntry('projects', i)}>Remove</button>
                       </div>
                     </div>
@@ -979,6 +1274,7 @@ export function Builder() {
                             ↓
                           </button>
                         )}
+                        <button className="btn-move" onClick={() => handleDuplicateEntry('certifications', i)} title="Duplicate">⧉</button>
                         <button className="btn-remove" onClick={() => removeEntry('certifications', i)}>Remove</button>
                       </div>
                     </div>
@@ -1040,6 +1336,7 @@ export function Builder() {
                             ↓
                           </button>
                         )}
+                        <button className="btn-move" onClick={() => handleDuplicateEntry('languages', i)} title="Duplicate">⧉</button>
                         <button className="btn-remove" onClick={() => removeEntry('languages', i)}>Remove</button>
                       </div>
                     </div>
@@ -1067,7 +1364,285 @@ export function Builder() {
                   + Add Language
                 </button>
               </div>
+
+              {/* Awards & Achievements */}
+              <div className="form-section" id="section-awards">
+                <div className="form-section-title">Awards & Achievements <span>(optional)</span></div>
+                {data.awards.map((award, i) => (
+                  <div className="entry-card" key={i}>
+                    <div className="entry-card-header">
+                      <div className="entry-card-title">Award {i + 1}</div>
+                      <div className="entry-card-actions">
+                        {i > 0 && (
+                          <button
+                            className="btn-move"
+                            onClick={() => moveEntry('awards', i, 'up')}
+                            aria-label="Move up"
+                            title="Move up"
+                          >
+                            ↑
+                          </button>
+                        )}
+                        {i < data.awards.length - 1 && (
+                          <button
+                            className="btn-move"
+                            onClick={() => moveEntry('awards', i, 'down')}
+                            aria-label="Move down"
+                            title="Move down"
+                          >
+                            ↓
+                          </button>
+                        )}
+                        <button className="btn-move" onClick={() => handleDuplicateEntry('awards', i)} title="Duplicate">⧉</button>
+                        <button className="btn-remove" onClick={() => removeEntry('awards', i)}>Remove</button>
+                      </div>
+                    </div>
+                    <div className="form-row">
+                      <div className="form-group">
+                        <label className="form-label">Award Title</label>
+                        <input className="form-input" placeholder="Spot Award" value={award.title} onChange={(e) => updateEntry('awards', i, 'title', e.target.value)} />
+                      </div>
+                      <div className="form-group">
+                        <label className="form-label">Issuer</label>
+                        <input className="form-input" placeholder="Infosys" value={award.issuer} onChange={(e) => updateEntry('awards', i, 'issuer', e.target.value)} />
+                      </div>
+                    </div>
+                    <div className="form-row">
+                      <div className="form-group">
+                        <label className="form-label">Year</label>
+                        <input className="form-input" placeholder="2023" value={award.year} onChange={(e) => updateEntry('awards', i, 'year', e.target.value)} />
+                      </div>
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">Description (optional)</label>
+                      <textarea className="form-textarea" placeholder="Brief description of the award..." value={award.description} onChange={(e) => updateEntry('awards', i, 'description', e.target.value)} />
+                    </div>
+                  </div>
+                ))}
+                <button
+                  className="btn-add-entry"
+                  onClick={() => addEntry('awards', { title: '', issuer: '', year: '', description: '' } as AwardEntry)}
+                >
+                  + Add Award
+                </button>
+              </div>
+
+              {/* Custom Sections */}
+              {data.customSections.map((customSection) => (
+                <div className="form-section" id={`section-custom-${customSection.id}`} key={customSection.id}>
+                  <div className="form-section-title-with-actions">
+                    <input
+                      className="form-input"
+                      style={{ marginBottom: '0', fontSize: '1.1rem', fontWeight: '600' }}
+                      placeholder="e.g. Volunteering, Publications, Hobbies"
+                      value={customSection.title}
+                      onChange={(e) => updateCustomSection(customSection.id, 'title', e.target.value)}
+                      aria-label="Section title"
+                    />
+                    <button
+                      className="btn-remove"
+                      onClick={() => {
+                        const ok = window.confirm('Delete this entire section?');
+                        if (ok) removeCustomSection(customSection.id);
+                      }}
+                      title="Delete section"
+                    >
+                      Delete section
+                    </button>
+                  </div>
+
+                  {customSection.items.map((item, itemIdx) => (
+                    <div className="entry-card" key={itemIdx}>
+                      <div className="entry-card-header">
+                        <div className="entry-card-title">Item {itemIdx + 1}</div>
+                        <div className="entry-card-actions">
+                          {itemIdx > 0 && (
+                            <button
+                              className="btn-move"
+                              onClick={() => moveCustomItem(customSection.id, itemIdx, 'up')}
+                              aria-label="Move up"
+                              title="Move up"
+                            >
+                              ↑
+                            </button>
+                          )}
+                          {itemIdx < customSection.items.length - 1 && (
+                            <button
+                              className="btn-move"
+                              onClick={() => moveCustomItem(customSection.id, itemIdx, 'down')}
+                              aria-label="Move down"
+                              title="Move down"
+                            >
+                              ↓
+                            </button>
+                          )}
+                          <button
+                            className="btn-move"
+                            onClick={() => duplicateCustomItem(customSection.id, itemIdx)}
+                            title="Duplicate"
+                          >
+                            ⧉
+                          </button>
+                          <button
+                            className="btn-remove"
+                            onClick={() => removeCustomItem(customSection.id, itemIdx)}
+                          >
+                            Remove
+                          </button>
+                        </div>
+                      </div>
+                      <div className="form-row">
+                        <div className="form-group">
+                          <label className="form-label">Heading</label>
+                          <input
+                            className="form-input"
+                            placeholder="e.g. Project name or volunteering title"
+                            value={item.heading}
+                            onChange={(e) => updateCustomItem(customSection.id, itemIdx, 'heading', e.target.value)}
+                          />
+                        </div>
+                        <div className="form-group">
+                          <label className="form-label">Subheading</label>
+                          <input
+                            className="form-input"
+                            placeholder="e.g. Organization or publication"
+                            value={item.subheading}
+                            onChange={(e) => updateCustomItem(customSection.id, itemIdx, 'subheading', e.target.value)}
+                          />
+                        </div>
+                      </div>
+                      <div className="form-group">
+                        <label className="form-label">Date</label>
+                        <input
+                          className="form-input"
+                          placeholder="e.g. Jan 2023 – Dec 2023"
+                          value={item.date}
+                          onChange={(e) => updateCustomItem(customSection.id, itemIdx, 'date', e.target.value)}
+                        />
+                      </div>
+                      <div className="form-group">
+                        <label className="form-label">Description</label>
+                        <p className="field-hint">Start lines with • to create bullet points. Press Enter to continue the list.</p>
+                        <div className="textarea-wrapper">
+                          <button
+                            type="button"
+                            className="btn-add-bullet"
+                            onClick={() => handleAddBulletCustom(customSection.id, itemIdx, `custom-desc-${customSection.id}-${itemIdx}`)}
+                            onMouseDown={(e) => e.preventDefault()}
+                            aria-label="Add bullet point"
+                            title="Add bullet point"
+                          >
+                            • Add bullet
+                          </button>
+                          <textarea
+                            id={`custom-desc-${customSection.id}-${itemIdx}`}
+                            className="form-textarea"
+                            placeholder="• Start lines with a bullet to create a list&#10;• Or write a paragraph normally&#10;• Mixing bullets and text is fine"
+                            value={item.description}
+                            onChange={(e) => updateCustomItem(customSection.id, itemIdx, 'description', e.target.value)}
+                            onKeyDown={(e) => handleBulletKeydownCustom(e, customSection.id, itemIdx)}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+
+                  <button
+                    className="btn-add-entry"
+                    onClick={() => addCustomItem(customSection.id)}
+                  >
+                    + Add Item
+                  </button>
+                </div>
+              ))}
+
+              {/* Add Custom Section Button */}
+              <div className="form-section" style={{ paddingTop: '8px', paddingBottom: '8px', border: 'none', backgroundColor: 'transparent' }}>
+                <button className="btn-add-entry" onClick={addCustomSection}>
+                  + Add Custom Section
+                </button>
+              </div>
             </div>
+
+            {/* Section Order Panel */}
+            <details className="section-order-panel" style={{ margin: '24px 0', padding: '16px', backgroundColor: 'var(--input-bg)', borderRadius: '6px', border: '1px solid var(--gray-200)' }}>
+              <summary style={{ cursor: 'pointer', fontWeight: '600', marginBottom: '12px', userSelect: 'none' }}>
+                Section Order
+              </summary>
+              {template === 'sidebar' || template === 'split' ? (
+                <p style={{ fontSize: '0.875rem', color: 'var(--gray-600)', marginBottom: '12px' }}>
+                  In two-column templates, sections move within their own column.
+                </p>
+              ) : null}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '16px' }}>
+                {resolveSectionOrder(data).map((sectionKey, idx, arr) => {
+                  let label = '';
+                  let isEmpty = false;
+
+                  if (sectionKey === 'summary') {
+                    label = 'Professional Summary';
+                    isEmpty = !data.summary.trim();
+                  } else if (sectionKey === 'experience') {
+                    label = 'Work Experience';
+                    isEmpty = data.experience.length === 0;
+                  } else if (sectionKey === 'education') {
+                    label = 'Education';
+                    isEmpty = data.education.length === 0;
+                  } else if (sectionKey === 'skills') {
+                    label = 'Skills';
+                    isEmpty = data.skills.length === 0;
+                  } else if (sectionKey === 'projects') {
+                    label = 'Projects';
+                    isEmpty = data.projects.length === 0;
+                  } else if (sectionKey === 'certifications') {
+                    label = 'Certifications';
+                    isEmpty = data.certifications.length === 0;
+                  } else if (sectionKey === 'languages') {
+                    label = 'Languages';
+                    isEmpty = data.languages.length === 0;
+                  } else if (sectionKey === 'awards') {
+                    label = 'Awards & Achievements';
+                    isEmpty = data.awards.length === 0;
+                  } else if (sectionKey.startsWith('custom:')) {
+                    const customId = sectionKey.slice(7);
+                    const customSec = data.customSections.find((c) => c.id === customId);
+                    label = customSec?.title || 'Untitled section';
+                    isEmpty = !customSec || (customSec.items.length === 0 && !customSec.title.trim());
+                  }
+
+                  return (
+                    <div key={sectionKey} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingRight: '8px' }}>
+                      <span style={{ fontSize: '0.9rem', color: isEmpty ? 'var(--gray-400)' : 'inherit' }}>
+                        {label} {isEmpty && <span style={{ fontSize: '0.8rem' }}>(empty)</span>}
+                      </span>
+                      <div style={{ display: 'flex', gap: '4px' }}>
+                        <button
+                          className="btn-move"
+                          onClick={() => handleMoveSection(sectionKey, 'up')}
+                          disabled={idx === 0}
+                          aria-label={`Move ${label} up`}
+                          title="Move up"
+                        >
+                          ↑
+                        </button>
+                        <button
+                          className="btn-move"
+                          onClick={() => handleMoveSection(sectionKey, 'down')}
+                          disabled={idx === arr.length - 1}
+                          aria-label={`Move ${label} down`}
+                          title="Move down"
+                        >
+                          ↓
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+              <button className="btn btn-outline btn-sm" onClick={handleResetSectionOrder}>
+                Reset to default order
+              </button>
+            </details>
           </div>
 
           {/* PREVIEW PANEL */}
@@ -1112,6 +1687,28 @@ export function Builder() {
                     <option key={t.key} value={t.key}>{t.name}</option>
                   ))}
                 </select>
+                <div className="accent-swatch-group">
+                  {[
+                    { name: 'Default', color: undefined },
+                    { name: 'Navy', color: '#1e3a5f' },
+                    { name: 'Teal', color: '#0f766e' },
+                    { name: 'Emerald', color: '#0E7A5A' },
+                    { name: 'Maroon', color: '#7f1d1d' },
+                    { name: 'Plum', color: '#5b21b6' },
+                    { name: 'Slate', color: '#334155' },
+                    { name: 'Charcoal', color: '#1f2937' },
+                  ].map((preset) => (
+                    <button
+                      key={preset.name}
+                      className="accent-swatch"
+                      style={preset.color ? { backgroundColor: preset.color } : { backgroundColor: '#e8e8e8' }}
+                      onClick={() => setData({ ...data, accent: preset.color })}
+                      aria-label={preset.name}
+                      aria-pressed={data.accent === preset.color}
+                      title={preset.name}
+                    />
+                  ))}
+                </div>
                 <button
                   className="btn btn-primary preview-header-download"
                   style={{ padding: '9px 18px', fontSize: '0.85rem' }}

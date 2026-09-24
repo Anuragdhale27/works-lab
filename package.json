@@ -12,6 +12,8 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "docx": "^9.7.1",
+    "jszip": "3.10.2",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "react-router-dom": "^7.9.4"
