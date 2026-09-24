@@ -14,6 +14,8 @@ export interface TemplateMeta {
   best: string;
   color: string;
   description: string;
+  seoDescription: string;
+  features: string[];
   Component: ComponentType<{ data: ResumeData }>;
 }
 

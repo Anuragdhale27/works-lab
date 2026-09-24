@@ -33,19 +33,15 @@ describe('SEO Routes', () => {
     expect(uniqueDescriptions.size).toBe(descriptions.length);
   });
 
-  it('all titles should be <= 60 chars where practical', () => {
+  it('all titles should be <= 60 chars', () => {
     PUBLIC_ROUTES.forEach((route) => {
-      // Most titles should be under 60 chars (homepage is an exception)
-      if (route.path !== '/') {
-        expect(route.title.length).toBeLessThanOrEqual(70); // Allowing some flexibility
-      }
+      expect(route.title.length).toBeLessThanOrEqual(60);
     });
   });
 
-  it('all descriptions should be reasonable length', () => {
+  it('all descriptions should be <= 160 chars', () => {
     PUBLIC_ROUTES.forEach((route) => {
-      expect(route.description.length).toBeGreaterThanOrEqual(100);
-      expect(route.description.length).toBeLessThanOrEqual(250);
+      expect(route.description.length).toBeLessThanOrEqual(160);
     });
   });
 
