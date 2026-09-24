@@ -6,6 +6,7 @@ import { MinimalTemplate } from './MinimalTemplate';
 import { ExecutiveTemplate } from './ExecutiveTemplate';
 import { SidebarTemplate } from './SidebarTemplate';
 import { SplitTemplate } from './SplitTemplate';
+import { TEMPLATE_META_REGISTRY } from './meta';
 
 export interface TemplateMeta {
   key: TemplateKey;
@@ -13,6 +14,8 @@ export interface TemplateMeta {
   best: string;
   color: string;
   description: string;
+  seoDescription: string;
+  features: string[];
   Component: ComponentType<{ data: ResumeData }>;
 }
 
@@ -21,60 +24,30 @@ export interface TemplateMeta {
 // page all render from this registry instead of hand-duplicated markup.
 export const TEMPLATES: Record<TemplateKey, TemplateMeta> = {
   modern: {
-    key: 'modern',
-    name: 'Modern ATS',
-    best: 'Software / IT / Tech',
-    color: '#1e3a5f',
-    description:
-      'A clean, structured resume with a bold header and clear section hierarchy. Built for tech roles where clarity and keywords matter most.',
+    ...TEMPLATE_META_REGISTRY.modern,
     Component: ModernTemplate,
   },
   classic: {
-    key: 'classic',
-    name: 'Classic ATS',
-    best: 'Corporate / Finance / Operations',
-    color: '#1a1a1a',
-    description:
-      'A traditional, serif-based layout trusted in finance, law, and corporate environments. Conveys experience and professionalism at a glance.',
+    ...TEMPLATE_META_REGISTRY.classic,
     Component: ClassicTemplate,
   },
   minimal: {
-    key: 'minimal',
-    name: 'Minimal ATS',
-    best: 'Freshers / Students',
-    color: '#333333',
-    description:
-      'A single-column, whitespace-forward layout built to parse cleanly in any ATS. Quiet and confident — ideal for freshers who want a clean resume without needing much content to fill it.',
+    ...TEMPLATE_META_REGISTRY.minimal,
     Component: MinimalTemplate,
   },
   executive: {
-    key: 'executive',
-    name: 'Executive ATS',
-    best: 'Experienced Professionals',
-    color: '#1c2b3a',
-    description:
-      'A light, premium resume designed for senior leaders. Typographic confidence and restrained detailing — a Playfair Display name, a single charcoal-navy accent — convey seniority without gimmicks.',
+    ...TEMPLATE_META_REGISTRY.executive,
     Component: ExecutiveTemplate,
   },
   sidebar: {
-    key: 'sidebar',
-    name: 'Sidebar ATS',
-    best: 'Tech / Product / Design',
-    color: '#164e63',
-    description:
-      'A two-column layout with a narrow sidebar for contact and skills, and a spacious main column for experience. Clean and focused — perfect for technical roles where expertise shines.',
+    ...TEMPLATE_META_REGISTRY.sidebar,
     Component: SidebarTemplate,
   },
   split: {
-    key: 'split',
-    name: 'Split ATS',
-    best: 'Business / Marketing / Sales',
-    color: '#3d3d3d',
-    description:
-      'A two-column design with a full-width header and serif typography. Main column for experience, side column for skills. Professional and polished for leadership and creative roles.',
+    ...TEMPLATE_META_REGISTRY.split,
     Component: SplitTemplate,
   },
-};
+} as Record<TemplateKey, TemplateMeta>;
 
 export const TEMPLATE_KEYS = Object.keys(TEMPLATES) as TemplateKey[];
 

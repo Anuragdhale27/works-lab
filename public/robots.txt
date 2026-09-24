@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+Disallow: /builder
+Sitemap: https://resume.workslab.in/sitemap.xml
