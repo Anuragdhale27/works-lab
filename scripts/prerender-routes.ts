@@ -199,17 +199,22 @@ function main(): void {
 
   const templateHtml = fs.readFileSync(TEMPLATE_FILE, 'utf-8');
 
-  // Generate all route files
+  // Generate all route files as .html files (not folders with index.html)
+  // GitHub Pages serves dist/template/modern.html at /template/modern with 200 status (no redirect)
   const routesToRender = [
     { path: '/', outPath: 'index.html', includeJsonLd: true, includeBreadcrumb: false },
-    ...PUBLIC_ROUTES.filter((r) => r.path !== '/').map((r) => ({
-      path: r.path,
-      outPath: `.${r.path}/index.html`,
-      includeJsonLd: r.path === '/',
-      includeBreadcrumb: r.path.startsWith('/template/'),
-    })),
+    ...PUBLIC_ROUTES.filter((r) => r.path !== '/').map((r) => {
+      // Convert /template/modern → template/modern.html
+      const routePath = r.path.substring(1); // Remove leading slash
+      return {
+        path: r.path,
+        outPath: `${routePath}.html`,
+        includeJsonLd: r.path === '/',
+        includeBreadcrumb: r.path.startsWith('/template/'),
+      };
+    }),
     // Add /builder route (noindex, not in sitemap)
-    { path: '/builder', outPath: './builder/index.html', includeJsonLd: false, includeBreadcrumb: false },
+    { path: '/builder', outPath: 'builder.html', includeJsonLd: false, includeBreadcrumb: false },
   ];
 
   routesToRender.forEach(({ path: routePath, outPath, includeJsonLd, includeBreadcrumb }) => {
