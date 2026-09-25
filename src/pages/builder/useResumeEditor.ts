@@ -49,7 +49,7 @@ export interface ResumeEditorState {
   ) => void;
   addSkill: (skill: string) => void;
   removeSkill: (index: number) => void;
-  addCustomSection: () => void;
+  addCustomSection: () => string;
   updateCustomSection: (customId: string, field: keyof CustomSection, value: unknown) => void;
   removeCustomSection: (customId: string) => void;
   addCustomItem: (customId: string) => void;
@@ -230,14 +230,15 @@ export function useResumeEditor(): ResumeEditorState {
     return id.substring(0, 40).replace(/[^a-z0-9-]/g, '');
   }
 
-  function addCustomSection() {
+  function addCustomSection(): string {
+    const id = generateCustomSectionId();
     setDataRaw(
       (d) => ({
         ...d,
         customSections: [
           ...d.customSections,
           {
-            id: generateCustomSectionId(),
+            id,
             title: '',
             items: [],
           } as CustomSection,
@@ -245,6 +246,7 @@ export function useResumeEditor(): ResumeEditorState {
       }),
       true
     );
+    return id;
   }
 
   function updateCustomSection(customId: string, field: keyof CustomSection, value: unknown) {

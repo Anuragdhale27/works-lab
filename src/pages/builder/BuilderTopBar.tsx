@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import { Menu } from '../../components/Menu';
 import type { ResumeEditorState } from './useResumeEditor';
-import { exportResumeToDocx } from '../../lib/exportDocx';
+import { buildDownloadMenuItems } from './downloadMenuItems';
 
 interface BuilderTopBarProps {
   editor: ResumeEditorState;
@@ -24,36 +24,7 @@ export function BuilderTopBar({
   showToast,
   designButtonRef,
 }: BuilderTopBarProps) {
-  function handleDownloadPDF() {
-    showToast('Opening the print dialog — choose "Save as PDF" as the destination.');
-    window.print();
-  }
-
-  function handleDownloadDocx() {
-    exportResumeToDocx(editor.data)
-      .then(() => showToast('Resume exported as .docx'))
-      .catch(() => showToast('Failed to export Word document.'));
-  }
-
-  function handleExportJSON() {
-    editor.exportData(showToast);
-  }
-
-  const downloadMenuItems = [
-    {
-      label: 'PDF',
-      description: 'Opens the print dialog — choose "Save as PDF" as the destination.',
-      onClick: handleDownloadPDF,
-    },
-    {
-      label: 'Word (.docx)',
-      onClick: handleDownloadDocx,
-    },
-    {
-      label: 'JSON backup',
-      onClick: handleExportJSON,
-    },
-  ];
+  const downloadMenuItems = buildDownloadMenuItems(editor, showToast);
 
   const moreMenuItems = [
     {

@@ -7,6 +7,7 @@ export interface MenuItem {
   onClick?: () => void;
   isDanger?: boolean;
   isDivider?: boolean;
+  disabled?: boolean;
 }
 
 interface MenuProps {
@@ -44,7 +45,7 @@ export function Menu({ trigger, items, ariaLabel }: MenuProps) {
         return;
       }
 
-      const menuItems = menuRef.current?.querySelectorAll('[role="menuitem"]') as NodeListOf<HTMLElement>;
+      const menuItems = menuRef.current?.querySelectorAll('[role="menuitem"]:not(:disabled)') as NodeListOf<HTMLElement>;
       if (!menuItems) return;
 
       switch (e.key) {
@@ -84,7 +85,7 @@ export function Menu({ trigger, items, ariaLabel }: MenuProps) {
     focusedIndexRef.current = -1;
     // Focus first menuitem on next frame
     setTimeout(() => {
-      const firstItem = menuRef.current?.querySelector('[role="menuitem"]') as HTMLElement;
+      const firstItem = menuRef.current?.querySelector('[role="menuitem"]:not(:disabled)') as HTMLElement;
       firstItem?.focus();
       focusedIndexRef.current = 0;
     }, 0);
@@ -107,6 +108,7 @@ export function Menu({ trigger, items, ariaLabel }: MenuProps) {
   }
 
   function handleItemClick(item: MenuItem) {
+    if (item.disabled) return;
     if (item.onClick) {
       item.onClick();
     }
@@ -139,6 +141,8 @@ export function Menu({ trigger, items, ariaLabel }: MenuProps) {
                 role="menuitem"
                 className={`menu-item ${item.isDanger ? 'menu-item-danger' : ''}`}
                 onClick={() => handleItemClick(item)}
+                disabled={item.disabled}
+                aria-disabled={item.disabled || undefined}
               >
                 <span className="menu-item-label">{item.label}</span>
                 {item.description && <span className="menu-item-description">{item.description}</span>}

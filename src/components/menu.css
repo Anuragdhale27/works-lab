@@ -48,7 +48,7 @@
   font-size: 0.9rem;
   color: var(--black);
   transition: background var(--transition);
-  min-height: 40px;
+  min-height: 44px;
   justify-content: center;
 }
 
@@ -73,6 +73,15 @@
   outline: none;
 }
 
+.menu-item:disabled {
+  color: var(--gray-400);
+  cursor: not-allowed;
+}
+
+.menu-item:disabled:hover {
+  background: none;
+}
+
 .menu-item-danger {
   color: #ef4444;
 }
@@ -86,4 +95,11 @@
   height: 1px;
   background: var(--gray-200);
   margin: 4px 0;
+}
+
+@media (max-width: 1023px) {
+  .menu-trigger {
+    min-width: 44px;
+    min-height: 44px;
+  }
 }
