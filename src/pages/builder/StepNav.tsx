@@ -1,16 +1,19 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { ResumeData } from '../../types/resume';
-import { SECTIONS, computeSectionStatuses, computeOverallProgress, type SectionKey } from '../../lib/completeness';
-import { resolveSectionOrder } from '../../lib/sectionOrder';
+import { computeOverallProgress, type SectionKey } from '../../lib/completeness';
+import { buildSteps, stepStatus } from './steps';
 
 interface StepNavProps {
   data: ResumeData;
-  containerRef: React.RefObject<HTMLDivElement | null>;
+  currentStepKey: string;
+  onSelectStep: (key: string) => void;
+  onAddSection: () => void;
+  onReorderClick: () => void;
 }
 
 // Small, stroke-based glyphs so the collapsed rail still reads at a glance
 // without pulling in an icon library.
-const SECTION_ICON_PATHS: Record<SectionKey | 'custom', string> = {
+const SECTION_ICON_PATHS: Record<SectionKey | 'custom' | 'personal', string> = {
   personal: 'M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm-7 9a7 7 0 0 1 14 0',
   summary: 'M5 4h11l3 3v13H5V4Zm3 6h9M8 13h9M8 16h6',
   experience: 'M4 8h16v11H4V8Zm4-3h8v3H8V5Z',
@@ -23,7 +26,7 @@ const SECTION_ICON_PATHS: Record<SectionKey | 'custom', string> = {
   custom: 'M6 4h12v16l-6-3-6 3V4Z',
 };
 
-function SectionIcon({ sectionKey }: { sectionKey: SectionKey | 'custom' }) {
+function SectionIcon({ sectionKey }: { sectionKey: SectionKey | 'custom' | 'personal' }) {
   return (
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
       <path d={SECTION_ICON_PATHS[sectionKey]} />
@@ -31,7 +34,7 @@ function SectionIcon({ sectionKey }: { sectionKey: SectionKey | 'custom' }) {
   );
 }
 
-export function StepNav({ data, containerRef }: StepNavProps) {
+export function StepNav({ data, currentStepKey, onSelectStep, onAddSection, onReorderClick }: StepNavProps) {
   const [isCollapsed, setIsCollapsed] = useState(() => {
     try {
       const stored = localStorage.getItem('workslab_rail_collapsed');
@@ -49,10 +52,8 @@ export function StepNav({ data, containerRef }: StepNavProps) {
     return false;
   });
 
-  const [activeKey, setActiveKey] = useState<string>(SECTIONS[0].key);
-  const statuses = computeSectionStatuses(data);
   const progress = computeOverallProgress(data);
-  const navRef = useRef<HTMLDivElement>(null);
+  const steps = buildSteps(data);
 
   // Persist collapse state
   useEffect(() => {
@@ -63,70 +64,17 @@ export function StepNav({ data, containerRef }: StepNavProps) {
     }
   }, [isCollapsed]);
 
-  // Track which section is currently in view
-  useEffect(() => {
-    const container = containerRef.current;
-    if (!container) return;
-
-    const resolved = resolveSectionOrder(data);
-    const sectionIds = resolved.map((key) => (key.startsWith('custom:') ? `section-custom-${key.slice(7)}` : `section-${key}`));
-
-    const elements = sectionIds.map((id) => document.getElementById(id)).filter((el): el is HTMLElement => el !== null);
-
-    if (elements.length === 0) return;
-
-    const headerEl = container.querySelector('.builder-form-header') as HTMLElement | null;
-    const topOffset = (headerEl?.offsetHeight ?? 0) + 8;
-    const bottomOffset = Math.max(0, container.clientHeight - topOffset - 120);
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const visible = entries.filter((e) => e.isIntersecting);
-        if (visible.length === 0) return;
-        visible.sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top);
-        const id = visible[0].target.id.replace('section-', '').replace('custom-', '');
-        setActiveKey(id);
-      },
-      {
-        root: container,
-        rootMargin: `-${topOffset}px 0px -${bottomOffset}px 0px`,
-        threshold: 0,
-      },
-    );
-
-    elements.forEach((el) => observer.observe(el));
-    return () => observer.disconnect();
-  }, [containerRef, data]);
-
-  function goToSection(key: string, isCustom = false) {
-    const container = containerRef.current;
-    const sectionId = isCustom ? `section-custom-${key}` : `section-${key}`;
-    const el = document.getElementById(sectionId);
-    if (!container || !el) return;
-    const headerEl = container.querySelector('.builder-form-header') as HTMLElement | null;
-    const offset = headerEl ? headerEl.offsetHeight + 12 : 12;
-    const top = el.offsetTop - offset;
-    container.scrollTo({ top: Math.max(0, top), behavior: 'smooth' });
-    setActiveKey(key);
+  function handleSelect(key: string) {
+    onSelectStep(key);
     // On narrower desktop widths the expanded rail overlays the form, so
-    // close it back down to icons-only once a section has been picked.
+    // close it back down to icons-only once a step has been picked.
     if (!isCollapsed && typeof window !== 'undefined' && window.innerWidth < 1440) {
       setIsCollapsed(true);
     }
   }
 
-  const resolved = resolveSectionOrder(data);
-  // Personal Information always comes first: it isn't part of
-  // resolveSectionOrder (which only orders the movable sections), so it
-  // has to be added back in rather than filtered against `resolved`.
-  const personalSection = SECTIONS.find((s) => s.key === 'personal');
-  const otherSections = SECTIONS.filter((s) => s.key !== 'personal' && resolved.includes(s.key));
-  const sections = personalSection ? [personalSection, ...otherSections] : otherSections;
-  const customSections = data.customSections
-    .filter((cs) => resolved.includes(`custom:${cs.id}`));
-
   return (
-    <div className={`step-nav ${isCollapsed ? 'collapsed' : 'expanded'}`} ref={navRef}>
+    <div className={`step-nav ${isCollapsed ? 'collapsed' : 'expanded'}`}>
       <button
         className="step-nav-toggle"
         onClick={() => setIsCollapsed(!isCollapsed)}
@@ -160,56 +108,54 @@ export function StepNav({ data, containerRef }: StepNavProps) {
           </div>
         </div>
 
-        {/* Section list */}
-        <nav className="step-nav-list" aria-label="Resume sections">
-          {sections.map((s) => {
-            const status = statuses[s.key as SectionKey];
-            const isActive = activeKey === s.key;
+        {/* Step list */}
+        <nav className="step-nav-list" aria-label="Resume steps">
+          {steps.map((step) => {
+            const status = stepStatus(step, data);
+            const isActive = currentStepKey === step.key;
+            const iconKey = step.key.startsWith('custom:') ? 'custom' : (step.key as SectionKey | 'personal');
             return (
               <button
-                key={s.key}
+                key={step.key}
                 type="button"
                 className={`step-nav-item status-${status}${isActive ? ' active' : ''}`}
-                onClick={() => goToSection(s.key)}
+                onClick={() => handleSelect(step.key)}
                 aria-current={isActive ? 'true' : undefined}
-                title={isCollapsed ? s.label : undefined}
+                title={isCollapsed ? step.label : undefined}
               >
-                <SectionIcon sectionKey={s.key} />
+                <SectionIcon sectionKey={iconKey} />
                 <span className={`step-nav-dot status-${status}`} aria-hidden="true" />
                 {isCollapsed ? (
-                  <span className="sr-only">{s.label}</span>
+                  <span className="sr-only">{step.label}</span>
                 ) : (
                   <span className="step-nav-text">
-                    <span className="step-nav-label">{s.label}</span>
-                    {s.optional && <span className="step-nav-optional">optional</span>}
+                    <span className="step-nav-label">{step.label}</span>
+                    {step.optional && <span className="step-nav-optional">optional</span>}
                   </span>
                 )}
               </button>
             );
           })}
 
-          {customSections.map((cs) => {
-            const isActive = activeKey === cs.id;
-            return (
-              <button
-                key={cs.id}
-                type="button"
-                className={`step-nav-item status-partial${isActive ? ' active' : ''}`}
-                onClick={() => goToSection(cs.id, true)}
-                aria-current={isActive ? 'true' : undefined}
-                title={isCollapsed ? (cs.title || 'Untitled section') : undefined}
-              >
-                <SectionIcon sectionKey="custom" />
-                <span className="step-nav-dot status-partial" aria-hidden="true" />
-                {isCollapsed ? (
-                  <span className="sr-only">{cs.title || 'Untitled section'}</span>
-                ) : (
-                  <span className="step-nav-label">{cs.title || 'Untitled section'}</span>
-                )}
-              </button>
-            );
-          })}
+          <button
+            type="button"
+            className="step-nav-item step-nav-add"
+            onClick={onAddSection}
+            title={isCollapsed ? 'Add section' : undefined}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M12 5v14M5 12h14" />
+            </svg>
+            {isCollapsed ? <span className="sr-only">Add section</span> : <span className="step-nav-text">+ Add section</span>}
+          </button>
         </nav>
+
+        <button type="button" className="step-nav-reorder" onClick={onReorderClick} title="Reorder sections">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01" />
+          </svg>
+          {isCollapsed ? <span className="sr-only">Reorder sections</span> : 'Reorder sections'}
+        </button>
       </div>
     </div>
   );

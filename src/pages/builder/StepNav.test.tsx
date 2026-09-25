@@ -1,22 +1,21 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { render, screen, fireEvent, cleanup } from '@testing-library/react';
-import { createRef } from 'react';
 import { StepNav } from './StepNav';
 import { emptyResumeData } from '../../types/resume';
 
 const STORAGE_KEY = 'workslab_rail_collapsed';
 
-function renderStepNav() {
-  const containerRef = createRef<HTMLDivElement>();
-  const { container } = render(
-    <>
-      <div ref={containerRef}>
-        <div className="builder-form-header" />
-      </div>
-      <StepNav data={emptyResumeData} containerRef={containerRef} />
-    </>,
+function renderStepNav(overrides: Partial<Parameters<typeof StepNav>[0]> = {}) {
+  return render(
+    <StepNav
+      data={emptyResumeData}
+      currentStepKey="personal"
+      onSelectStep={vi.fn()}
+      onAddSection={vi.fn()}
+      onReorderClick={vi.fn()}
+      {...overrides}
+    />,
   );
-  return container;
 }
 
 describe('StepNav', () => {
@@ -57,22 +56,32 @@ describe('StepNav', () => {
     expect(document.querySelector('.step-nav')).toHaveClass('collapsed');
   });
 
-  it('reads a persisted expanded state back on mount even at narrow desktop widths', () => {
-    window.innerWidth = 1200;
-    localStorage.setItem(STORAGE_KEY, 'false');
-    renderStepNav();
-    expect(document.querySelector('.step-nav')).toHaveClass('expanded');
-  });
-
-  it('defaults to collapsed with no stored preference at narrow desktop widths', () => {
-    window.innerWidth = 1200;
-    renderStepNav();
-    expect(document.querySelector('.step-nav')).toHaveClass('collapsed');
-  });
-
   it('always lists Personal Information first, even though it is not part of resolveSectionOrder', () => {
     renderStepNav();
     const labels = Array.from(document.querySelectorAll('.step-nav-label')).map((el) => el.textContent);
     expect(labels[0]).toBe('Personal Information');
+  });
+
+  it('marks the current step active and jumps to a clicked step', () => {
+    const onSelectStep = vi.fn();
+    renderStepNav({ currentStepKey: 'summary', onSelectStep });
+
+    expect(screen.getByRole('button', { name: /Professional Summary/ })).toHaveAttribute('aria-current', 'true');
+    expect(screen.getByRole('button', { name: /Personal Information/ })).not.toHaveAttribute('aria-current');
+
+    fireEvent.click(screen.getByRole('button', { name: /Work Experience/ }));
+    expect(onSelectStep).toHaveBeenCalledWith('experience');
+  });
+
+  it('offers "Add section" and "Reorder sections" actions', () => {
+    const onAddSection = vi.fn();
+    const onReorderClick = vi.fn();
+    renderStepNav({ onAddSection, onReorderClick });
+
+    fireEvent.click(screen.getByRole('button', { name: '+ Add section' }));
+    expect(onAddSection).toHaveBeenCalledTimes(1);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Reorder sections' }));
+    expect(onReorderClick).toHaveBeenCalledTimes(1);
   });
 });

@@ -44,8 +44,7 @@ export function SectionOrderPanel({ data, template, onMoveSection, onResetOrder 
   const order = resolveSectionOrder(data);
 
   return (
-    <details className="section-order-panel">
-      <summary>Section Order</summary>
+    <div className="section-order-panel">
       {(template === 'sidebar' || template === 'split') && (
         <p className="section-order-hint">In two-column templates, sections move within their own column.</p>
       )}
@@ -84,6 +83,6 @@ export function SectionOrderPanel({ data, template, onMoveSection, onResetOrder 
       <button className="btn btn-outline btn-sm" onClick={onResetOrder}>
         Reset to default order
       </button>
-    </details>
+    </div>
   );
 }
