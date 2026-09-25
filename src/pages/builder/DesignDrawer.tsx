@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { TEMPLATES } from '../../templates';
 import type { TemplateKey, ResumeData } from '../../types/resume';
 
@@ -18,7 +18,7 @@ interface DesignDrawerProps {
   onTemplateChange: (template: TemplateKey) => void;
   onAccentChange: (accent: string) => void;
   onClose: () => void;
-  triggerRef?: React.RefObject<HTMLButtonElement>;
+  triggerRef?: React.RefObject<HTMLButtonElement | null>;
 }
 
 export function DesignDrawer({
@@ -32,20 +32,24 @@ export function DesignDrawer({
 }: DesignDrawerProps) {
   const drawerRef = useRef<HTMLDivElement>(null);
 
+  const handleClose = useCallback(() => {
+    onClose();
+    triggerRef?.current?.focus();
+  }, [onClose, triggerRef]);
+
   // Handle Escape key
   useEffect(() => {
     if (!isOpen) return;
 
     function handleKeyDown(e: KeyboardEvent) {
       if (e.key === 'Escape') {
-        onClose();
-        triggerRef?.current?.focus();
+        handleClose();
       }
     }
 
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, onClose, triggerRef]);
+  }, [isOpen, handleClose]);
 
   // Focus management
   useEffect(() => {
@@ -59,12 +63,12 @@ export function DesignDrawer({
   if (!isOpen) return null;
 
   return (
-    <div className="design-drawer-overlay" onClick={onClose}>
+    <div className="design-drawer-overlay" onClick={handleClose}>
       <div
         className="design-drawer"
         ref={drawerRef}
         role="dialog"
-        aria-modal="false"
+        aria-modal="true"
         aria-labelledby="design-drawer-title"
         onClick={(e) => e.stopPropagation()}
       >
@@ -72,7 +76,7 @@ export function DesignDrawer({
           <h2 id="design-drawer-title">Design</h2>
           <button
             className="design-drawer-close"
-            onClick={onClose}
+            onClick={handleClose}
             aria-label="Close design drawer"
             title="Close (Esc)"
           >
@@ -83,8 +87,8 @@ export function DesignDrawer({
         <div className="design-drawer-content">
           {/* Template selector */}
           <div className="design-section">
-            <h3 className="design-section-title">Template</h3>
-            <div className="template-cards">
+            <h3 className="design-section-title" id="template-group-label">Template</h3>
+            <div className="template-cards" role="radiogroup" aria-labelledby="template-group-label">
               {Object.entries(TEMPLATES).map(([key, meta]) => (
                 <button
                   key={key}
@@ -102,8 +106,8 @@ export function DesignDrawer({
 
           {/* Accent color selector */}
           <div className="design-section">
-            <h3 className="design-section-title">Accent Colour</h3>
-            <div className="accent-swatches">
+            <h3 className="design-section-title" id="accent-group-label">Accent Colour</h3>
+            <div className="accent-swatches" role="radiogroup" aria-labelledby="accent-group-label">
               {ACCENT_PRESETS.map((preset) => (
                 <button
                   key={preset.value}

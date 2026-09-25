@@ -8,14 +8,45 @@ interface StepNavProps {
   containerRef: React.RefObject<HTMLDivElement | null>;
 }
 
+// Small, stroke-based glyphs so the collapsed rail still reads at a glance
+// without pulling in an icon library.
+const SECTION_ICON_PATHS: Record<SectionKey | 'custom', string> = {
+  personal: 'M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm-7 9a7 7 0 0 1 14 0',
+  summary: 'M5 4h11l3 3v13H5V4Zm3 6h9M8 13h9M8 16h6',
+  experience: 'M4 8h16v11H4V8Zm4-3h8v3H8V5Z',
+  education: 'M12 4 2 9l10 5 10-5-10-5Zm-6 8v5c2 2 10 2 12 0v-5',
+  skills: 'M12 3 3 12l9 9 9-9-9-9Zm0 5v8',
+  projects: 'M4 6h6l2 2h8v11H4V6Z',
+  certifications: 'M12 3a5 5 0 1 0 0 10 5 5 0 0 0 0-10ZM8 12l-2 8 6-3 6 3-2-8',
+  languages: 'M4 6h9M4 10h6M13 4v3c0 4-2 7-6 8M13 21l4-9 4 9M14.5 18h5',
+  awards: 'M12 3a5 5 0 1 0 0 10 5 5 0 0 0 0-10ZM8 12l-2 8 6-3 6 3-2-8',
+  custom: 'M6 4h12v16l-6-3-6 3V4Z',
+};
+
+function SectionIcon({ sectionKey }: { sectionKey: SectionKey | 'custom' }) {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d={SECTION_ICON_PATHS[sectionKey]} />
+    </svg>
+  );
+}
+
 export function StepNav({ data, containerRef }: StepNavProps) {
   const [isCollapsed, setIsCollapsed] = useState(() => {
     try {
       const stored = localStorage.getItem('workslab_rail_collapsed');
-      return stored === 'true';
+      if (stored === 'true') return true;
+      if (stored === 'false') return false;
     } catch {
-      return false;
+      // Ignore localStorage errors, fall through to width-based default.
     }
+    // No stored preference yet: start collapsed on narrower desktop
+    // screens (1024-1439px), where the expanded rail would otherwise
+    // overlay the form.
+    if (typeof window !== 'undefined' && window.innerWidth < 1440) {
+      return true;
+    }
+    return false;
   });
 
   const [activeKey, setActiveKey] = useState<string>(SECTIONS[0].key);
@@ -77,6 +108,11 @@ export function StepNav({ data, containerRef }: StepNavProps) {
     const top = el.offsetTop - offset;
     container.scrollTo({ top: Math.max(0, top), behavior: 'smooth' });
     setActiveKey(key);
+    // On narrower desktop widths the expanded rail overlays the form, so
+    // close it back down to icons-only once a section has been picked.
+    if (!isCollapsed && typeof window !== 'undefined' && window.innerWidth < 1440) {
+      setIsCollapsed(true);
+    }
   }
 
   const resolved = resolveSectionOrder(data);
@@ -133,8 +169,11 @@ export function StepNav({ data, containerRef }: StepNavProps) {
                 aria-current={isActive ? 'true' : undefined}
                 title={isCollapsed ? s.label : undefined}
               >
+                <SectionIcon sectionKey={s.key} />
                 <span className={`step-nav-dot status-${status}`} aria-hidden="true" />
-                {!isCollapsed && (
+                {isCollapsed ? (
+                  <span className="sr-only">{s.label}</span>
+                ) : (
                   <>
                     <span className="step-nav-label">{s.label}</span>
                     {s.optional && <span className="step-nav-optional">optional</span>}
@@ -153,10 +192,15 @@ export function StepNav({ data, containerRef }: StepNavProps) {
                 className={`step-nav-item status-partial${isActive ? ' active' : ''}`}
                 onClick={() => goToSection(cs.id, true)}
                 aria-current={isActive ? 'true' : undefined}
-                title={isCollapsed ? cs.title : undefined}
+                title={isCollapsed ? (cs.title || 'Untitled section') : undefined}
               >
+                <SectionIcon sectionKey="custom" />
                 <span className="step-nav-dot status-partial" aria-hidden="true" />
-                {!isCollapsed && <span className="step-nav-label">{cs.title}</span>}
+                {isCollapsed ? (
+                  <span className="sr-only">{cs.title || 'Untitled section'}</span>
+                ) : (
+                  <span className="step-nav-label">{cs.title || 'Untitled section'}</span>
+                )}
               </button>
             );
           })}

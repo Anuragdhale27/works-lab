@@ -5,18 +5,24 @@ import { exportResumeToDocx } from '../../lib/exportDocx';
 
 interface BuilderTopBarProps {
   editor: ResumeEditorState;
+  isDesignOpen: boolean;
   onDesignClick: () => void;
   onLoadExample: () => void;
+  onImportClick: () => void;
   onClearEverything: () => void;
   showToast: (message: string) => void;
+  designButtonRef?: React.RefObject<HTMLButtonElement | null>;
 }
 
 export function BuilderTopBar({
   editor,
+  isDesignOpen,
   onDesignClick,
   onLoadExample,
+  onImportClick,
   onClearEverything,
   showToast,
+  designButtonRef,
 }: BuilderTopBarProps) {
   function handleDownloadPDF() {
     showToast('Opening the print dialog — choose "Save as PDF" as the destination.');
@@ -33,20 +39,10 @@ export function BuilderTopBar({
     editor.exportData(showToast);
   }
 
-  function handleImportJSON() {
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = '.json,application/json';
-    input.onchange = (e) => {
-      const file = (e.target as HTMLInputElement).files?.[0];
-      if (file) editor.importData(file, showToast);
-    };
-    input.click();
-  }
-
   const downloadMenuItems = [
     {
-      label: 'PDF (recommended for applications)',
+      label: 'PDF',
+      description: 'Opens the print dialog — choose "Save as PDF" as the destination.',
       onClick: handleDownloadPDF,
     },
     {
@@ -66,7 +62,7 @@ export function BuilderTopBar({
     },
     {
       label: 'Import JSON backup',
-      onClick: handleImportJSON,
+      onClick: onImportClick,
     },
     {
       isDivider: true,
@@ -127,9 +123,12 @@ export function BuilderTopBar({
         </button>
 
         <button
-          className="builder-top-design-btn"
+          ref={designButtonRef}
+          className={`builder-top-design-btn${isDesignOpen ? ' active' : ''}`}
           onClick={onDesignClick}
           aria-label="Design"
+          aria-expanded={isDesignOpen}
+          aria-haspopup="dialog"
           title="Customize design and template"
         >
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -137,12 +136,13 @@ export function BuilderTopBar({
             <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2m0 18c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8" />
             <path d="M8 12h8M12 8v8" />
           </svg>
+          <span>Design</span>
         </button>
 
         <Menu
           trigger={
             <span className="builder-top-download-btn">
-              Download
+              <span className="builder-top-download-label">Download</span>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M6 9l6 6 6-6" />
               </svg>
