@@ -116,7 +116,12 @@ export function StepNav({ data, containerRef }: StepNavProps) {
   }
 
   const resolved = resolveSectionOrder(data);
-  const sections = SECTIONS.filter((s) => resolved.includes(s.key));
+  // Personal Information always comes first: it isn't part of
+  // resolveSectionOrder (which only orders the movable sections), so it
+  // has to be added back in rather than filtered against `resolved`.
+  const personalSection = SECTIONS.find((s) => s.key === 'personal');
+  const otherSections = SECTIONS.filter((s) => s.key !== 'personal' && resolved.includes(s.key));
+  const sections = personalSection ? [personalSection, ...otherSections] : otherSections;
   const customSections = data.customSections
     .filter((cs) => resolved.includes(`custom:${cs.id}`));
 
@@ -174,10 +179,10 @@ export function StepNav({ data, containerRef }: StepNavProps) {
                 {isCollapsed ? (
                   <span className="sr-only">{s.label}</span>
                 ) : (
-                  <>
+                  <span className="step-nav-text">
                     <span className="step-nav-label">{s.label}</span>
                     {s.optional && <span className="step-nav-optional">optional</span>}
-                  </>
+                  </span>
                 )}
               </button>
             );

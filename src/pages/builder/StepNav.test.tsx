@@ -69,4 +69,10 @@ describe('StepNav', () => {
     renderStepNav();
     expect(document.querySelector('.step-nav')).toHaveClass('collapsed');
   });
+
+  it('always lists Personal Information first, even though it is not part of resolveSectionOrder', () => {
+    renderStepNav();
+    const labels = Array.from(document.querySelectorAll('.step-nav-label')).map((el) => el.textContent);
+    expect(labels[0]).toBe('Personal Information');
+  });
 });

@@ -1,22 +1,14 @@
 import { useCallback, useEffect, useRef } from 'react';
 import { TEMPLATES } from '../../templates';
+import { ACCENT_PRESETS } from '../../lib/accentPresets';
 import type { TemplateKey, ResumeData } from '../../types/resume';
-
-const ACCENT_PRESETS = [
-  { name: 'Emerald', value: '#0E7A5A' },
-  { name: 'Blue', value: '#1e3a5f' },
-  { name: 'Maroon', value: '#7c2d12' },
-  { name: 'Navy', value: '#001f3f' },
-  { name: 'Purple', value: '#553399' },
-  { name: 'Slate', value: '#3f3f46' },
-];
 
 interface DesignDrawerProps {
   isOpen: boolean;
   template: TemplateKey;
   data: ResumeData;
   onTemplateChange: (template: TemplateKey) => void;
-  onAccentChange: (accent: string) => void;
+  onAccentChange: (accent: string | undefined) => void;
   onClose: () => void;
   triggerRef?: React.RefObject<HTMLButtonElement | null>;
 }
@@ -108,18 +100,34 @@ export function DesignDrawer({
           <div className="design-section">
             <h3 className="design-section-title" id="accent-group-label">Accent Colour</h3>
             <div className="accent-swatches" role="radiogroup" aria-labelledby="accent-group-label">
-              {ACCENT_PRESETS.map((preset) => (
-                <button
-                  key={preset.value}
-                  className={`accent-swatch ${data.accent === preset.value ? 'selected' : ''}`}
-                  style={{ backgroundColor: preset.value }}
-                  onClick={() => onAccentChange(preset.value)}
-                  role="radio"
-                  aria-checked={data.accent === preset.value}
-                  aria-label={preset.name}
-                  title={preset.name}
-                />
-              ))}
+              {ACCENT_PRESETS.map((preset) => {
+                const isSelected = data.accent === preset.color;
+                return (
+                  <button
+                    key={preset.name}
+                    type="button"
+                    className={`accent-swatch-option ${isSelected ? 'selected' : ''}`}
+                    onClick={() => onAccentChange(preset.color)}
+                    role="radio"
+                    aria-checked={isSelected}
+                    aria-label={preset.name}
+                    title={preset.name}
+                  >
+                    <span
+                      className={`accent-swatch ${preset.color ? '' : 'is-default'}`}
+                      style={preset.color ? { backgroundColor: preset.color } : undefined}
+                      aria-hidden="true"
+                    >
+                      {isSelected && (
+                        <svg className="accent-swatch-check" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M5 13l4 4L19 7" />
+                        </svg>
+                      )}
+                    </span>
+                    <span className="accent-swatch-label">{preset.name}</span>
+                  </button>
+                );
+              })}
             </div>
           </div>
         </div>
