@@ -3,6 +3,7 @@ import './menu.css';
 
 export interface MenuItem {
   label?: string;
+  description?: string;
   onClick?: () => void;
   isDanger?: boolean;
   isDivider?: boolean;
@@ -78,20 +79,30 @@ export function Menu({ trigger, items, ariaLabel }: MenuProps) {
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [isOpen]);
 
-  function toggleMenu(e: React.KeyboardEvent<HTMLButtonElement> | React.MouseEvent<HTMLButtonElement>) {
-    if (e instanceof KeyboardEvent && !['Enter', ' ', 'ArrowDown'].includes(e.key)) return;
-    e.preventDefault?.();
-    if (!isOpen) {
-      setIsOpen(true);
-      focusedIndexRef.current = -1;
-      // Focus first menuitem on next frame
-      setTimeout(() => {
-        const firstItem = menuRef.current?.querySelector('[role="menuitem"]') as HTMLElement;
-        firstItem?.focus();
-        focusedIndexRef.current = 0;
-      }, 0);
-    } else {
+  function openMenu() {
+    setIsOpen(true);
+    focusedIndexRef.current = -1;
+    // Focus first menuitem on next frame
+    setTimeout(() => {
+      const firstItem = menuRef.current?.querySelector('[role="menuitem"]') as HTMLElement;
+      firstItem?.focus();
+      focusedIndexRef.current = 0;
+    }, 0);
+  }
+
+  function handleTriggerClick() {
+    if (isOpen) {
       setIsOpen(false);
+    } else {
+      openMenu();
+    }
+  }
+
+  function handleTriggerKeyDown(e: React.KeyboardEvent<HTMLButtonElement>) {
+    if (!['Enter', ' ', 'ArrowDown'].includes(e.key)) return;
+    e.preventDefault();
+    if (!isOpen) {
+      openMenu();
     }
   }
 
@@ -111,8 +122,8 @@ export function Menu({ trigger, items, ariaLabel }: MenuProps) {
         aria-haspopup="menu"
         aria-expanded={isOpen}
         aria-label={ariaLabel}
-        onClick={toggleMenu}
-        onKeyDown={toggleMenu}
+        onClick={handleTriggerClick}
+        onKeyDown={handleTriggerKeyDown}
       >
         {trigger}
       </button>
@@ -129,7 +140,8 @@ export function Menu({ trigger, items, ariaLabel }: MenuProps) {
                 className={`menu-item ${item.isDanger ? 'menu-item-danger' : ''}`}
                 onClick={() => handleItemClick(item)}
               >
-                {item.label}
+                <span className="menu-item-label">{item.label}</span>
+                {item.description && <span className="menu-item-description">{item.description}</span>}
               </button>
             ),
           )}
