@@ -29,6 +29,7 @@ describe('MobilePreviewSheet', () => {
         TemplateComponent={FakeTemplate}
         data={emptyResumeData}
         pageCount={1}
+        contentHeight={1123}
         editor={fakeEditor}
         showToast={vi.fn()}
         onClose={vi.fn()}
@@ -46,6 +47,7 @@ describe('MobilePreviewSheet', () => {
         TemplateComponent={FakeTemplate}
         data={emptyResumeData}
         pageCount={1}
+        contentHeight={1123}
         editor={fakeEditor}
         showToast={vi.fn()}
         onClose={onClose}
@@ -74,6 +76,7 @@ describe('MobilePreviewSheet', () => {
         TemplateComponent={FakeTemplate}
         data={emptyResumeData}
         pageCount={1}
+        contentHeight={1123}
         editor={fakeEditor}
         showToast={vi.fn()}
         onClose={onClose}
@@ -95,6 +98,7 @@ describe('MobilePreviewSheet', () => {
         TemplateComponent={FakeTemplate}
         data={emptyResumeData}
         pageCount={2}
+        contentHeight={2200}
         editor={fakeEditor}
         showToast={vi.fn()}
         onClose={vi.fn()}
@@ -105,5 +109,43 @@ describe('MobilePreviewSheet', () => {
     fireEvent.click(screen.getByRole('button', { name: '100%' }));
     expect(screen.getByRole('button', { name: '100%' })).toHaveAttribute('aria-pressed', 'true');
     expect(screen.getByText('2 pages')).toBeInTheDocument();
+  });
+
+  it('shows the page count and page-break line the parent tells it to, not its own measurement', () => {
+    // The sheet trusts the pageCount/contentHeight it's given (computed
+    // once, off-screen, in Builder.tsx) rather than measuring its own
+    // — possibly display:none'd — DOM, which is the bug this guards.
+    const { rerender } = render(
+      <MobilePreviewSheet
+        isOpen
+        templateName="Modern ATS"
+        TemplateComponent={FakeTemplate}
+        data={emptyResumeData}
+        pageCount={1}
+        contentHeight={1123}
+        editor={fakeEditor}
+        showToast={vi.fn()}
+        onClose={vi.fn()}
+      />,
+    );
+    expect(screen.getByText('1 page')).toBeInTheDocument();
+    expect(document.querySelector('.page-break-line')).not.toBeInTheDocument();
+
+    rerender(
+      <MobilePreviewSheet
+        isOpen
+        templateName="Modern ATS"
+        TemplateComponent={FakeTemplate}
+        data={emptyResumeData}
+        pageCount={2}
+        contentHeight={2200}
+        editor={fakeEditor}
+        showToast={vi.fn()}
+        onClose={vi.fn()}
+      />,
+    );
+    expect(screen.getByText('2 pages')).toBeInTheDocument();
+    expect(document.querySelectorAll('.page-break-line')).toHaveLength(1);
+    expect(screen.getByText('Page 2')).toBeInTheDocument();
   });
 });

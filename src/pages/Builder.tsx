@@ -37,6 +37,7 @@ export function Builder() {
   });
 
   const previewRef = useRef<HTMLDivElement>(null);
+  const measureRef = useRef<HTMLDivElement>(null);
   const wrapperRef = useRef<HTMLDivElement>(null);
   const formPanelRef = useRef<HTMLDivElement>(null);
   const headingRef = useRef<HTMLHeadingElement>(null);
@@ -112,9 +113,14 @@ export function Builder() {
     return () => ro.disconnect();
   }, []);
 
-  // Content height measurement
+  // Content height measurement. This drives the page-count pill and the
+  // page-break lines on both the desktop preview panel and the mobile
+  // preview sheet, so it's measured from `measureRef` — an always-mounted,
+  // off-screen (not display:none) copy of the template — rather than the
+  // on-screen `.a4-page` node, which is display:none on mobile and would
+  // measure 0 there.
   useEffect(() => {
-    const el = previewRef.current;
+    const el = measureRef.current;
     if (!el) return;
     function recompute() {
       setContentHeight(el!.scrollHeight || A4_HEIGHT_PX);
@@ -462,10 +468,22 @@ export function Builder() {
         TemplateComponent={TemplateComponent}
         data={editor.data}
         pageCount={pageCount}
+        contentHeight={contentHeight}
         editor={editor}
         showToast={showToast}
         onClose={() => setIsMobilePreviewOpen(false)}
       />
+
+      {/* Off-screen, always-mounted copy of the template used only to
+          measure its unscaled content height (see the effect above).
+          Positioned off-canvas rather than display:none, which would
+          report a 0 scrollHeight and break the page count whenever the
+          visible preview isn't rendered (e.g. on mobile). */}
+      <div className="preview-measure" aria-hidden="true">
+        <div style={{ width: A4_WIDTH_PX }} ref={measureRef}>
+          <TemplateComponent data={editor.data} />
+        </div>
+      </div>
 
       {document.getElementById('print-root') &&
         createPortal(

@@ -14,6 +14,7 @@ interface MobilePreviewSheetProps {
   TemplateComponent: ComponentType<{ data: ResumeData }>;
   data: ResumeData;
   pageCount: number;
+  contentHeight: number;
   editor: ResumeEditorState;
   showToast: (message: string) => void;
   onClose: () => void;
@@ -25,6 +26,7 @@ export function MobilePreviewSheet({
   TemplateComponent,
   data,
   pageCount,
+  contentHeight,
   editor,
   showToast,
   onClose,
@@ -111,7 +113,7 @@ export function MobilePreviewSheet({
       </div>
 
       <div className="mobile-preview-wrapper" ref={wrapperRef}>
-        <div style={{ width: A4_WIDTH_PX * scale, height: A4_HEIGHT_PX * scale }}>
+        <div style={{ width: A4_WIDTH_PX * scale, height: Math.max(contentHeight, A4_HEIGHT_PX) * scale }}>
           <div
             className="a4-page"
             style={{
@@ -121,6 +123,20 @@ export function MobilePreviewSheet({
             }}
           >
             <TemplateComponent data={data} />
+
+            {pageCount > 1 && (
+              <div
+                className="page-break-overlay"
+                aria-hidden="true"
+                style={{ width: A4_WIDTH_PX, height: pageCount * A4_HEIGHT_PX }}
+              >
+                {Array.from({ length: pageCount - 1 }, (_, i) => (
+                  <div key={i} className="page-break-line" style={{ top: (i + 1) * A4_HEIGHT_PX }}>
+                    <span className="page-break-label">Page {i + 2}</span>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </div>
