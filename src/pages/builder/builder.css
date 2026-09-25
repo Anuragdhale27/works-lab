@@ -2,14 +2,30 @@
 
 .builder-shell {
   display: grid;
-  grid-template-columns: 220px 1fr 1fr;
+  grid-template-columns: auto 1fr;
   grid-template-rows: 56px 1fr;
-  min-height: 100vh;
+  height: 100vh;
   gap: 0;
+  background: #fbfaf7;
 }
 
-.builder-layout {
-  display: contents;
+/* Everything to the right of the rail: the mobile edit/preview toggle
+   (mobile only) plus the form + preview panels. A plain flex column, not
+   a nested grid item relying on `display: contents`, which mis-sizes
+   sticky-header children in some engines. */
+.builder-main {
+  grid-column: 2;
+  grid-row: 2;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.builder-panels {
+  flex: 1;
+  display: flex;
+  min-height: 0;
 }
 
 /* Top bar */
@@ -78,21 +94,25 @@
 
 .builder-top-design-btn {
   background: none;
-  border: none;
+  border: 1px solid var(--gray-200);
   cursor: pointer;
-  width: 40px;
   height: 40px;
+  padding: 0 14px;
   display: flex;
   align-items: center;
-  justify-content: center;
+  gap: 6px;
   color: var(--gray-600);
+  font-size: 0.88rem;
+  font-weight: 600;
   border-radius: var(--radius-sm);
   transition: all var(--transition);
 }
 
-.builder-top-design-btn:hover {
+.builder-top-design-btn:hover,
+.builder-top-design-btn.active {
   background: var(--accent-light);
   color: var(--accent);
+  border-color: var(--accent);
 }
 
 .builder-top-download-btn,
@@ -263,6 +283,20 @@
   min-height: 40px;
 }
 
+.step-nav.collapsed .step-nav-item {
+  justify-content: center;
+  padding: 8px;
+  position: relative;
+}
+
+.step-nav.collapsed .step-nav-item .step-nav-dot {
+  position: absolute;
+  top: 6px;
+  right: 10px;
+  width: 6px;
+  height: 6px;
+}
+
 .step-nav-item:hover {
   background: var(--gray-100);
 }
@@ -309,34 +343,34 @@
 
 /* Form panel */
 .builder-form-panel {
-  grid-column: 2;
-  grid-row: 2;
   background: var(--white);
   border-right: 1px solid var(--gray-200);
   overflow-y: auto;
+  flex: 1 1 520px;
   min-width: 400px;
   max-width: 520px;
+  min-height: 0;
 }
 
 .builder-form-header {
-  padding: 24px 28px 16px;
+  padding: 16px 28px 12px;
   border-bottom: 1px solid var(--gray-200);
-  position: sticky;
-  top: 0;
   background: var(--white);
-  z-index: 10;
+  flex-shrink: 0;
 }
 
 .builder-form-header h2 {
   font-size: 1rem;
   font-weight: 700;
+  line-height: 1.3;
   margin: 0;
 }
 
 .builder-form-header p {
   font-size: 0.78rem;
+  line-height: 1.4;
   color: var(--gray-400);
-  margin: 3px 0 0;
+  margin: 2px 0 0;
 }
 
 .builder-sections {
@@ -348,10 +382,15 @@
   border-bottom: 1px solid var(--gray-200);
 }
 
+.builder-sections .form-section:first-child {
+  padding-top: 16px;
+}
+
 .form-section-title {
   font-weight: 700;
   font-size: 0.9rem;
-  margin-bottom: 16px;
+  line-height: 1.3;
+  margin-bottom: 12px;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -372,6 +411,7 @@
   display: block;
   font-size: 0.8rem;
   font-weight: 600;
+  line-height: 1.3;
   color: var(--gray-600);
   margin-bottom: 5px;
 }
@@ -541,6 +581,60 @@
   background: var(--accent-light);
 }
 
+/* Section order panel */
+.section-order-panel {
+  margin: 24px 0;
+  padding: 16px;
+  background: var(--gray-100);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--gray-200);
+}
+
+.section-order-panel summary {
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.9rem;
+  margin-bottom: 12px;
+  user-select: none;
+}
+
+.section-order-hint {
+  font-size: 0.875rem;
+  color: var(--gray-600);
+  margin-bottom: 12px;
+}
+
+.section-order-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.section-order-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-right: 8px;
+}
+
+.section-order-label {
+  font-size: 0.9rem;
+}
+
+.section-order-label.is-empty {
+  color: var(--gray-400);
+}
+
+.section-order-empty-tag {
+  font-size: 0.8rem;
+}
+
+.section-order-actions {
+  display: flex;
+  gap: 4px;
+}
+
 .skill-tags {
   display: flex;
   flex-wrap: wrap;
@@ -585,13 +679,14 @@
 
 /* Preview panel */
 .builder-preview-panel {
-  grid-column: 3;
-  grid-row: 2;
   background: #f1efea;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
   padding: 16px;
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
 }
 
 .preview-header {
@@ -608,6 +703,29 @@
   font-weight: 600;
   color: var(--gray-600);
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.preview-header-controls {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: nowrap;
+  flex-shrink: 0;
+}
+
+.page-count-pill {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--gray-600);
+  background: var(--white);
+  border: 1px solid var(--gray-200);
+  border-radius: 999px;
+  padding: 6px 12px;
+  white-space: nowrap;
+  flex-shrink: 0;
+  cursor: default;
 }
 
 .zoom-controls {
@@ -861,13 +979,12 @@
 /* Mobile view toggle - hidden at desktop */
 .mobile-view-toggle {
   display: none;
-  grid-column: 1 / -1;
-  grid-row: 2;
   gap: 8px;
   background: var(--white);
   border-bottom: 1px solid var(--gray-200);
   padding: 10px 16px;
   z-index: 20;
+  flex-shrink: 0;
 }
 
 /* Section nav (old chip nav - hidden at desktop) */
@@ -902,20 +1019,26 @@
 @media (max-width: 1023px) {
   .builder-shell {
     grid-template-columns: 1fr;
-    grid-template-rows: 56px auto 1fr;
+  }
+
+  .builder-main {
+    grid-column: 1;
+  }
+
+  .builder-panels {
+    flex-direction: column;
+    overflow: hidden;
   }
 
   .builder-form-panel {
-    grid-column: 1;
-    grid-row: 3;
     max-width: none;
+    flex: 1 1 auto;
     border-right: none;
     min-width: 0;
   }
 
   .builder-preview-panel {
-    grid-column: 1;
-    grid-row: 3;
+    flex: 1 1 auto;
   }
 
   .step-nav {
@@ -923,8 +1046,6 @@
   }
 
   .mobile-view-toggle {
-    grid-column: 1 / -1;
-    grid-row: 2;
     display: flex !important;
     gap: 8px;
     background: var(--white);
@@ -952,11 +1073,11 @@
     border-color: var(--black);
   }
 
-  .builder-layout[data-mobile-view='edit'] .builder-preview-panel {
+  .builder-panels[data-mobile-view='edit'] .builder-preview-panel {
     display: none;
   }
 
-  .builder-layout[data-mobile-view='preview'] .builder-form-panel {
+  .builder-panels[data-mobile-view='preview'] .builder-form-panel {
     display: none;
   }
 
@@ -1030,7 +1151,30 @@
   }
 }
 
-@media (max-width: 480px) {
+@media (max-width: 600px) {
+  .builder-top-bar {
+    padding: 0 10px;
+    gap: 6px;
+  }
+
+  .builder-top-actions {
+    gap: 2px;
+  }
+
+  .builder-top-logo {
+    font-size: 1.05rem;
+  }
+
+  .builder-top-design-btn span {
+    display: none;
+  }
+
+  .builder-top-design-btn {
+    width: 40px;
+    padding: 0;
+    justify-content: center;
+  }
+
   .save-indicator-full {
     display: none;
   }
@@ -1038,9 +1182,15 @@
   .save-indicator-short {
     display: inline;
   }
+}
+
+@media (max-width: 480px) {
+  .builder-top-download-label {
+    display: none;
+  }
 
   .builder-top-download-btn {
-    padding: 8px 12px;
+    padding: 8px 10px;
     font-size: 0.8rem;
   }
 

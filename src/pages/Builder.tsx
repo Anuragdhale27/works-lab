@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useSearchParams } from 'react-router-dom';
-import { Link } from 'react-router-dom';
 import type { TemplateKey } from '../types/resume';
 import type {
   ExperienceEntry,
@@ -12,14 +11,16 @@ import type {
   AwardEntry,
 } from '../types/resume';
 import { TEMPLATES, isTemplateKey } from '../templates';
-import { computeOverallProgress } from '../lib/completeness';
 import { resolveSectionOrder, moveSection as moveSectionOrder } from '../lib/sectionOrder';
 import { SkipLink } from '../components/SkipLink';
 import { useToast } from '../components/ToastProvider';
 import { SectionNav } from '../components/SectionNav';
-import { exportResumeToDocx } from '../lib/exportDocx';
 import { useResumeEditor } from './builder/useResumeEditor';
 import { EntryListEditor } from './builder/EntryListEditor';
+import { BuilderTopBar } from './builder/BuilderTopBar';
+import { StepNav } from './builder/StepNav';
+import { DesignDrawer } from './builder/DesignDrawer';
+import { SectionOrderPanel } from './builder/SectionOrderPanel';
 import {
   experienceConfig,
   educationConfig,
@@ -50,8 +51,10 @@ export function Builder() {
   const previewRef = useRef<HTMLDivElement>(null);
   const wrapperRef = useRef<HTMLDivElement>(null);
   const formPanelRef = useRef<HTMLDivElement>(null);
+  const designButtonRef = useRef<HTMLButtonElement>(null);
   const importInputRef = useRef<HTMLInputElement>(null);
 
+  const [isDesignOpen, setIsDesignOpen] = useState(false);
   const [mobileView, setMobileView] = useState<'edit' | 'preview'>('edit');
   const [zoomMode, setZoomMode] = useState<ZoomMode>('fit');
   const [fitScale, setFitScale] = useState(1);
@@ -109,11 +112,6 @@ export function Builder() {
       editor.pendingCaretRef.current = null;
     }
   }, [editor.data, editor.pendingCaretRef]);
-
-  function downloadPDF() {
-    showToast('Opening the print dialog — choose "Save as PDF" as the destination.');
-    window.print();
-  }
 
   function handleAddBullet(sectionKey: 'experience' | 'education' | 'projects', entryIndex: number, textarea: HTMLTextAreaElement) {
     const start = textarea.selectionStart;
@@ -214,76 +212,39 @@ export function Builder() {
   }
 
   const TemplateComponent = TEMPLATES[template].Component;
-  const progress = computeOverallProgress(editor.data);
   const emailInvalid = editor.touched.has('email') && editor.data.personal.email.trim() !== '' && !EMAIL_RE.test(editor.data.personal.email);
 
   return (
     <>
       <SkipLink />
-      <div style={{ overflow: 'hidden' }}>
-        <nav>
-          <div className="container">
-            <div className="nav-inner">
-              <Link to="/" className="nav-logo">
-                Works<span>Lab</span>
-              </Link>
-              <div className="builder-nav-actions">
-                <span className="builder-nav-template" style={{ fontSize: '0.82rem', color: 'var(--gray-600)' }}>
-                  Template: <strong style={{ color: 'var(--black)' }}>{TEMPLATES[template].name}</strong>
-                </span>
-                <button
-                  className="btn-move"
-                  onClick={editor.undo}
-                  disabled={!editor.canUndo}
-                  aria-label="Undo"
-                  title={`Undo${editor.canUndo ? ' (Ctrl+Z)' : ''}`}
-                  style={{ marginRight: '6px' }}
-                >
-                  ↶
-                </button>
-                <button
-                  className="btn-move"
-                  onClick={editor.redo}
-                  disabled={!editor.canRedo}
-                  aria-label="Redo"
-                  title={`Redo${editor.canRedo ? ' (Ctrl+Shift+Z)' : ''}`}
-                  style={{ marginRight: '12px' }}
-                >
-                  ↷
-                </button>
-                <span
-                  className={`save-indicator state-${editor.saveState === 'idle' ? 'saved' : editor.saveState}`}
-                  role="status"
-                  aria-live="polite"
-                >
-                  <span aria-hidden="true">●</span>{' '}
-                  <span className="save-indicator-full">
-                    {editor.saveState === 'saving' && 'Saving…'}
-                    {editor.saveState === 'error' && "Couldn't save — storage unavailable"}
-                    {(editor.saveState === 'saved' || editor.saveState === 'idle') &&
-                      (editor.savedAt ? 'Saved just now' : 'Auto-saved locally')}
-                  </span>
-                  <span className="save-indicator-short">
-                    {editor.saveState === 'saving' && 'Saving'}
-                    {editor.saveState === 'error' && 'Error'}
-                    {(editor.saveState === 'saved' || editor.saveState === 'idle') && 'Saved'}
-                  </span>
-                </span>
-                <button
-                  className="btn btn-primary builder-nav-download"
-                  style={{ padding: '9px 20px', fontSize: '0.88rem' }}
-                  onClick={downloadPDF}
-                  title='In the dialog that opens, choose "Save as PDF" as the destination.'
-                >
-                  Download PDF
-                </button>
-              </div>
-            </div>
-          </div>
-        </nav>
-      </div>
+      <div className="builder-shell">
+        <BuilderTopBar
+          editor={editor}
+          isDesignOpen={isDesignOpen}
+          onDesignClick={() => setIsDesignOpen((v) => !v)}
+          onLoadExample={() => editor.loadExample(showToast)}
+          onImportClick={() => importInputRef.current?.click()}
+          onClearEverything={() => editor.clearEverything(showToast)}
+          showToast={showToast}
+          designButtonRef={designButtonRef}
+        />
 
-      <main id="main" tabIndex={-1}>
+        <input
+          ref={importInputRef}
+          type="file"
+          accept="application/json,.json"
+          className="sr-only"
+          aria-label="Import resume JSON file"
+          onChange={(e) => {
+            const file = e.target.files?.[0];
+            if (file) editor.importData(file, showToast);
+            e.target.value = '';
+          }}
+        />
+
+        <StepNav data={editor.data} containerRef={formPanelRef} />
+
+        <main id="main" tabIndex={-1} className="builder-main">
         <div className="mobile-view-toggle" role="tablist" aria-label="Builder view">
           <button
             type="button"
@@ -308,7 +269,7 @@ export function Builder() {
             Preview
           </button>
         </div>
-        <div className="builder-layout" data-mobile-view={mobileView}>
+        <div className="builder-panels" data-mobile-view={mobileView}>
           {/* FORM PANEL */}
           <div
             className="builder-form-panel"
@@ -318,50 +279,8 @@ export function Builder() {
             aria-labelledby="mobile-tab-edit"
           >
             <div className="builder-form-header">
-              <h2>Build Your Resume</h2>
-              <p>Your information is saved on this device only.</p>
-
-              <div className="progress-block">
-                <div className="progress-row">
-                  <div className="progress-bar-track" role="progressbar" aria-valuenow={progress.percent} aria-valuemin={0} aria-valuemax={100} aria-label="Resume completeness">
-                    <div className="progress-bar-fill" style={{ width: `${progress.percent}%` }} />
-                  </div>
-                  <span className="progress-count">
-                    {progress.doneCount} of {progress.totalCount} essentials done
-                  </span>
-                </div>
-                {progress.nextAction && <p className="progress-next">{progress.nextAction}</p>}
-              </div>
-
-              <div className="form-header-actions">
-                <button type="button" className="btn btn-outline btn-sm" onClick={() => editor.loadExample(showToast)}>
-                  Load example resume
-                </button>
-                <button type="button" className="btn btn-outline btn-sm" onClick={() => editor.exportData(showToast)}>
-                  Export JSON
-                </button>
-                <button type="button" className="btn btn-outline btn-sm" onClick={() => exportResumeToDocx(editor.data).then(() => showToast('Resume exported as .docx')).catch(() => showToast('Failed to export Word document.'))}>
-                  Export Word (.docx)
-                </button>
-                <button type="button" className="btn btn-outline btn-sm" onClick={() => importInputRef.current?.click()}>
-                  Import JSON
-                </button>
-                <input
-                  ref={importInputRef}
-                  type="file"
-                  accept="application/json,.json"
-                  className="sr-only"
-                  aria-label="Import resume JSON file"
-                  onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (file) editor.importData(file, showToast);
-                    e.target.value = '';
-                  }}
-                />
-                <button type="button" className="btn-text-danger" onClick={() => editor.clearEverything(showToast)}>
-                  Clear everything
-                </button>
-              </div>
+              <h2>Build your resume</h2>
+              <p>Saved on this device only.</p>
 
               <SectionNav data={editor.data} containerRef={formPanelRef} />
             </div>
@@ -687,85 +606,12 @@ export function Builder() {
               </div>
             </div>
 
-            {/* Section Order Panel */}
-            <details className="section-order-panel" style={{ margin: '24px 0', padding: '16px', backgroundColor: 'var(--input-bg)', borderRadius: '6px', border: '1px solid var(--gray-200)' }}>
-              <summary style={{ cursor: 'pointer', fontWeight: '600', marginBottom: '12px', userSelect: 'none' }}>
-                Section Order
-              </summary>
-              {template === 'sidebar' || template === 'split' ? (
-                <p style={{ fontSize: '0.875rem', color: 'var(--gray-600)', marginBottom: '12px' }}>
-                  In two-column templates, sections move within their own column.
-                </p>
-              ) : null}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '16px' }}>
-                {resolveSectionOrder(editor.data).map((sectionKey, idx, arr) => {
-                  let label = '';
-                  let isEmpty = false;
-
-                  if (sectionKey === 'summary') {
-                    label = 'Professional Summary';
-                    isEmpty = !editor.data.summary.trim();
-                  } else if (sectionKey === 'experience') {
-                    label = 'Work Experience';
-                    isEmpty = editor.data.experience.length === 0;
-                  } else if (sectionKey === 'education') {
-                    label = 'Education';
-                    isEmpty = editor.data.education.length === 0;
-                  } else if (sectionKey === 'skills') {
-                    label = 'Skills';
-                    isEmpty = editor.data.skills.length === 0;
-                  } else if (sectionKey === 'projects') {
-                    label = 'Projects';
-                    isEmpty = editor.data.projects.length === 0;
-                  } else if (sectionKey === 'certifications') {
-                    label = 'Certifications';
-                    isEmpty = editor.data.certifications.length === 0;
-                  } else if (sectionKey === 'languages') {
-                    label = 'Languages';
-                    isEmpty = editor.data.languages.length === 0;
-                  } else if (sectionKey === 'awards') {
-                    label = 'Awards & Achievements';
-                    isEmpty = editor.data.awards.length === 0;
-                  } else if (sectionKey.startsWith('custom:')) {
-                    const customId = sectionKey.slice(7);
-                    const customSec = editor.data.customSections.find((c) => c.id === customId);
-                    label = customSec?.title || 'Untitled section';
-                    isEmpty = !customSec || (customSec.items.length === 0 && !customSec.title.trim());
-                  }
-
-                  return (
-                    <div key={sectionKey} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingRight: '8px' }}>
-                      <span style={{ fontSize: '0.9rem', color: isEmpty ? 'var(--gray-400)' : 'inherit' }}>
-                        {label} {isEmpty && <span style={{ fontSize: '0.8rem' }}>(empty)</span>}
-                      </span>
-                      <div style={{ display: 'flex', gap: '4px' }}>
-                        <button
-                          className="btn-move"
-                          onClick={() => handleMoveSection(sectionKey, 'up')}
-                          disabled={idx === 0}
-                          aria-label={`Move ${label} up`}
-                          title="Move up"
-                        >
-                          ↑
-                        </button>
-                        <button
-                          className="btn-move"
-                          onClick={() => handleMoveSection(sectionKey, 'down')}
-                          disabled={idx === arr.length - 1}
-                          aria-label={`Move ${label} down`}
-                          title="Move down"
-                        >
-                          ↓
-                        </button>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-              <button className="btn btn-outline btn-sm" onClick={handleResetSectionOrder}>
-                Reset to default order
-              </button>
-            </details>
+            <SectionOrderPanel
+              data={editor.data}
+              template={template}
+              onMoveSection={handleMoveSection}
+              onResetOrder={handleResetSectionOrder}
+            />
           </div>
 
           {/* PREVIEW PANEL */}
@@ -776,8 +622,8 @@ export function Builder() {
             aria-labelledby="mobile-tab-preview"
           >
             <div className="preview-header">
-              <span className="preview-title">Live Preview</span>
-              <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
+              <span className="preview-title">Preview · {TEMPLATES[template].name}</span>
+              <div className="preview-header-controls">
                 <div className="zoom-controls" role="group" aria-label="Preview zoom level">
                   <button
                     type="button"
@@ -799,59 +645,18 @@ export function Builder() {
                     </button>
                   ))}
                 </div>
-                <select
-                  className="form-select"
-                  style={{ width: 'auto', padding: '8px 12px', fontSize: '0.82rem' }}
-                  value={template}
-                  onChange={(e) => setTemplate(e.target.value as TemplateKey)}
-                  aria-label="Choose template"
+                <span
+                  className="page-count-pill"
+                  title={
+                    pageCount > 1
+                      ? `${pageCount} pages — recruiters prefer 1 page for under 10 years of experience.`
+                      : 'Fits on 1 page.'
+                  }
                 >
-                  {Object.values(TEMPLATES).map((t) => (
-                    <option key={t.key} value={t.key}>{t.name}</option>
-                  ))}
-                </select>
-                <div className="accent-swatch-group">
-                  {[
-                    { name: 'Default', color: undefined },
-                    { name: 'Navy', color: '#1e3a5f' },
-                    { name: 'Teal', color: '#0f766e' },
-                    { name: 'Emerald', color: '#0E7A5A' },
-                    { name: 'Maroon', color: '#7f1d1d' },
-                    { name: 'Plum', color: '#5b21b6' },
-                    { name: 'Slate', color: '#334155' },
-                    { name: 'Charcoal', color: '#1f2937' },
-                  ].map((preset) => (
-                    <button
-                      key={preset.name}
-                      className="accent-swatch"
-                      style={preset.color ? { backgroundColor: preset.color } : { backgroundColor: '#e8e8e8' }}
-                      onClick={() => editor.setData({ ...editor.data, accent: preset.color })}
-                      aria-label={preset.name}
-                      aria-pressed={editor.data.accent === preset.color}
-                      title={preset.name}
-                    />
-                  ))}
-                </div>
-                <button
-                  className="btn btn-primary preview-header-download"
-                  style={{ padding: '9px 18px', fontSize: '0.85rem' }}
-                  onClick={downloadPDF}
-                  title='In the dialog that opens, choose "Save as PDF" as the destination.'
-                >
-                  ⬇ Download PDF
-                </button>
+                  {pageCount} {pageCount === 1 ? 'page' : 'pages'}
+                </span>
               </div>
             </div>
-
-            <p className="print-hint">
-              This opens your browser's print dialog — choose <strong>Save as PDF</strong> as the destination.
-            </p>
-
-            {pageCount > 1 && (
-              <p className="page-count-notice">
-                {pageCount} pages — recruiters prefer 1 page for under 10 years of experience.
-              </p>
-            )}
 
             <div className="preview-wrapper" ref={wrapperRef}>
               <div
@@ -894,7 +699,18 @@ export function Builder() {
             </div>
           </div>
         </div>
-      </main>
+        </main>
+
+        <DesignDrawer
+          isOpen={isDesignOpen}
+          template={template}
+          data={editor.data}
+          onTemplateChange={setTemplate}
+          onAccentChange={(accent) => editor.setData({ ...editor.data, accent }, true)}
+          onClose={() => setIsDesignOpen(false)}
+          triggerRef={designButtonRef}
+        />
+      </div>
 
       {document.getElementById('print-root') &&
         createPortal(
