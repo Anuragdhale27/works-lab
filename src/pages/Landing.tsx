@@ -6,6 +6,7 @@ import { FaqAccordion } from '../components/FaqAccordion';
 import { TEMPLATE_KEYS, TEMPLATES } from '../templates';
 import { CONFIG, goToPayment } from '../lib/config';
 import { sampleResumeData } from '../lib/sampleData';
+import sampleAvatar from '../assets/sample-avatar.png';
 import { useFadeIn } from '../hooks/useFadeIn';
 import '../styles/landing.css';
 
@@ -52,7 +53,7 @@ export function Landing() {
                   <TemplatePreview template={TEMPLATES.classic} />
                 </div>
                 <div className="lp-preview-card lp-preview-card--front">
-                  <TemplatePreview template={TEMPLATES.modern} />
+                  <TemplatePreview template={TEMPLATES.modern} photo={sampleAvatar} />
                 </div>
                 <span className="lp-preview-tag">Real, ATS-readable PDF</span>
               </div>
@@ -64,7 +65,7 @@ export function Landing() {
         <section className="lp-proof">
           <div className="container">
             <ul className="lp-proof-list">
-              <li className="fade-in">4 ATS-safe templates</li>
+              <li className="fade-in">{TEMPLATE_KEYS.length} ATS-safe templates</li>
               <li className="fade-in">Real text PDF — not an image</li>
               <li className="fade-in">₹{CONFIG.PRODUCT_PRICE} once. No subscription.</li>
               <li className="fade-in">Your data never leaves your browser</li>
