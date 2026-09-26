@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef } from 'react';
 import type { ResumeData, TemplateKey } from '../../types/resume';
+import type { Column } from '../../lib/sectionColumns';
 import { SectionOrderPanel } from './SectionOrderPanel';
 
 interface SectionOrderDialogProps {
@@ -7,6 +8,7 @@ interface SectionOrderDialogProps {
   data: ResumeData;
   template: TemplateKey;
   onMoveSection: (sectionKey: string, direction: 'up' | 'down') => void;
+  onMoveSectionToColumn: (sectionKey: string, column: Column) => void;
   onResetOrder: () => void;
   onClose: () => void;
 }
@@ -16,6 +18,7 @@ export function SectionOrderDialog({
   data,
   template,
   onMoveSection,
+  onMoveSectionToColumn,
   onResetOrder,
   onClose,
 }: SectionOrderDialogProps) {
@@ -65,7 +68,13 @@ export function SectionOrderDialog({
             ✕
           </button>
         </div>
-        <SectionOrderPanel data={data} template={template} onMoveSection={onMoveSection} onResetOrder={onResetOrder} />
+        <SectionOrderPanel
+          data={data}
+          template={template}
+          onMoveSection={onMoveSection}
+          onMoveSectionToColumn={onMoveSectionToColumn}
+          onResetOrder={onResetOrder}
+        />
       </div>
     </div>
   );

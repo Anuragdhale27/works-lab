@@ -703,6 +703,11 @@
   background: #f3f4f6;
 }
 
+.btn-move-column {
+  font-size: 0.75rem;
+  white-space: nowrap;
+}
+
 .btn-remove {
   background: none;
   border: none;
@@ -771,10 +776,17 @@
   user-select: none;
 }
 
-.section-order-hint {
-  font-size: 0.875rem;
+.section-order-column + .section-order-column {
+  margin-top: 20px;
+}
+
+.section-order-column-title {
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
   color: var(--gray-600);
-  margin-bottom: 12px;
+  margin-bottom: 8px;
 }
 
 .section-order-list {
@@ -786,9 +798,16 @@
 
 .section-order-row {
   display: flex;
+  flex-wrap: wrap;
   justify-content: space-between;
   align-items: center;
+  gap: 8px;
   padding-right: 8px;
+}
+
+.section-order-label {
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .section-order-label {

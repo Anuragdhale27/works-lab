@@ -4,6 +4,7 @@ import { useSearchParams } from 'react-router-dom';
 import type { TemplateKey } from '../types/resume';
 import { TEMPLATES, isTemplateKey } from '../templates';
 import { resolveSectionOrder, moveSection as moveSectionOrder } from '../lib/sectionOrder';
+import { isTwoColumnTemplate, moveSectionInColumn, setSectionColumn, type Column } from '../lib/sectionColumns';
 import { downloadPDF } from '../lib/downloadPdf';
 import { SkipLink } from '../components/SkipLink';
 import { useToast } from '../components/ToastProvider';
@@ -233,13 +234,20 @@ export function Builder() {
   }
 
   function handleMoveSection(sectionKey: string, direction: 'up' | 'down') {
-    const resolved = resolveSectionOrder(editor.data);
-    const newOrder = moveSectionOrder(resolved, sectionKey, direction === 'up' ? -1 : 1);
+    const dir = direction === 'up' ? -1 : 1;
+    const newOrder = isTwoColumnTemplate(template)
+      ? moveSectionInColumn(editor.data, template, sectionKey, dir)
+      : moveSectionOrder(resolveSectionOrder(editor.data), sectionKey, dir);
     editor.setData({ ...editor.data, sectionOrder: newOrder }, true);
   }
 
+  function handleMoveSectionToColumn(sectionKey: string, column: Column) {
+    const newColumns = setSectionColumn(editor.data, sectionKey, column);
+    editor.setData({ ...editor.data, sectionColumns: newColumns }, true);
+  }
+
   function handleResetSectionOrder() {
-    editor.setData({ ...editor.data, sectionOrder: [] }, true);
+    editor.setData({ ...editor.data, sectionOrder: [], sectionColumns: undefined }, true);
   }
 
   function handleAddSection() {
@@ -447,6 +455,7 @@ export function Builder() {
           data={editor.data}
           template={template}
           onMoveSection={handleMoveSection}
+          onMoveSectionToColumn={handleMoveSectionToColumn}
           onResetOrder={handleResetSectionOrder}
           onClose={() => setIsReorderOpen(false)}
         />
