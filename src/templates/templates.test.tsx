@@ -118,4 +118,65 @@ describe('template registry', () => {
       expect(result & Node.DOCUMENT_POSITION_FOLLOWING).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
     }
   });
+
+  it.each(['sidebar', 'split'] as const)(
+    '%s renders Education (default: side) in the main column when sectionColumns overrides it to "main"',
+    (key) => {
+      const { Component } = TEMPLATES[key];
+      const testData = {
+        ...emptyResumeData,
+        education: [{ degree: 'BSc CS', institution: 'State U', location: '', start: '2016', end: '2020', description: '' }],
+        sectionColumns: { education: 'main' as const },
+      };
+      const { container } = render(<Component data={testData} />);
+      const mainSelector = key === 'sidebar' ? '.rsb-main' : '.rsp-main';
+      const sideSelector = key === 'sidebar' ? '.rsb-sidebar' : '.rsp-sidebar';
+      expect(container.querySelector(mainSelector)?.textContent).toContain('BSc CS');
+      expect(container.querySelector(sideSelector)?.textContent ?? '').not.toContain('BSc CS');
+    }
+  );
+
+  it.each(['sidebar', 'split'] as const)(
+    '%s renders Experience (default: main) in the side column, in the compact stacked-date style, when sectionColumns overrides it to "side"',
+    (key) => {
+      const { Component } = TEMPLATES[key];
+      const testData = {
+        ...emptyResumeData,
+        experience: [{ company: 'Acme Corp', title: 'Staff Engineer', location: '', start: '2020', end: '2023', description: '• Shipped things' }],
+        sectionColumns: { experience: 'side' as const },
+      };
+      const { container } = render(<Component data={testData} />);
+      const mainSelector = key === 'sidebar' ? '.rsb-main' : '.rsp-main';
+      const sideSelector = key === 'sidebar' ? '.rsb-sidebar' : '.rsp-sidebar';
+      expect(container.querySelector(mainSelector)?.textContent ?? '').not.toContain('Acme Corp');
+
+      const side = container.querySelector(sideSelector);
+      expect(side?.textContent).toContain('Staff Engineer');
+      expect(side?.textContent).toContain('Acme Corp');
+      // Compact side-column item: real bullet list, and the date stacked
+      // in its own element rather than right-aligned next to the title.
+      expect(side?.querySelector('.rtc-side-item ul li')?.textContent).toBe('Shipped things');
+      expect(side?.querySelector('.rtc-side-item-date')?.textContent).toContain('2020');
+    }
+  );
+
+  it.each(['sidebar', 'split'] as const)(
+    '%s renders a moved custom section in the side column',
+    (key) => {
+      const { Component } = TEMPLATES[key];
+      const testData = {
+        ...emptyResumeData,
+        customSections: [
+          { id: 'volunteering', title: 'Volunteering', items: [{ heading: 'Food Bank', subheading: 'Volunteer', date: '2022', description: 'Helped out' }] },
+        ],
+        sectionColumns: { 'custom:volunteering': 'side' as const },
+      };
+      const { container } = render(<Component data={testData} />);
+      const sideSelector = key === 'sidebar' ? '.rsb-sidebar' : '.rsp-sidebar';
+      const mainSelector = key === 'sidebar' ? '.rsb-main' : '.rsp-main';
+      expect(container.querySelector(sideSelector)?.textContent).toContain('Volunteering');
+      expect(container.querySelector(sideSelector)?.textContent).toContain('Food Bank');
+      expect(container.querySelector(mainSelector)?.textContent ?? '').not.toContain('Volunteering');
+    }
+  );
 });
