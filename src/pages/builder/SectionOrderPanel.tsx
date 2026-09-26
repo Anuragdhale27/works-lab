@@ -59,7 +59,8 @@ function SectionRow({
   count: number;
   onMoveUp: () => void;
   onMoveDown: () => void;
-  columnButton?: { label: string; onClick: () => void };
+  /** `fullLabel` is the accessible name/tooltip; `shortText` is what's shown on the button. */
+  columnButton?: { fullLabel: string; shortText: string; onClick: () => void };
 }) {
   return (
     <div className="section-order-row" key={sectionKey}>
@@ -68,8 +69,13 @@ function SectionRow({
       </span>
       <div className="section-order-actions">
         {columnButton && (
-          <button className="btn-move btn-move-column" onClick={columnButton.onClick} title={columnButton.label}>
-            {columnButton.label}
+          <button
+            className="btn-move btn-move-column"
+            onClick={columnButton.onClick}
+            aria-label={columnButton.fullLabel}
+            title={columnButton.fullLabel}
+          >
+            {columnButton.shortText}
           </button>
         )}
         <button
@@ -117,7 +123,8 @@ export function SectionOrderPanel({ data, template, onMoveSection, onMoveSection
                   onMoveUp={() => onMoveSection(sectionKey, 'up')}
                   onMoveDown={() => onMoveSection(sectionKey, 'down')}
                   columnButton={{
-                    label: `Move ${label} to side column →`,
+                    fullLabel: `Move ${label} to side column`,
+                    shortText: '→ Side',
                     onClick: () => onMoveSectionToColumn(sectionKey, 'side'),
                   }}
                 />
@@ -142,7 +149,8 @@ export function SectionOrderPanel({ data, template, onMoveSection, onMoveSection
                   onMoveUp={() => onMoveSection(sectionKey, 'up')}
                   onMoveDown={() => onMoveSection(sectionKey, 'down')}
                   columnButton={{
-                    label: `← Move ${label} to main column`,
+                    fullLabel: `Move ${label} to main column`,
+                    shortText: '← Main',
                     onClick: () => onMoveSectionToColumn(sectionKey, 'main'),
                   }}
                 />
