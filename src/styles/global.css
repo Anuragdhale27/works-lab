@@ -952,6 +952,22 @@ footer {
 .rsp-edu-school { font-size: var(--r-text-sm); color: var(--r-ink-soft); }
 .rsp-edu-year { font-size: var(--r-text-sm); color: var(--r-ink-soft); }
 
+/* Shared "side column" compact styles — used by Sidebar and Split for any
+   section a user has moved into the side column via sectionColumns
+   (experience, projects, summary, awards, custom sections). Smaller
+   headings than the main-column variant, and dates stacked under the
+   title instead of right-aligned, matching the existing sidebar-title /
+   cert-item look. Not template-prefixed since both templates share it;
+   the accent-color fallback is scoped per template below. */
+.rtc-side-item { margin-bottom: var(--r-sp-3); }
+.rtc-side-item:last-child { margin-bottom: 0; }
+.rtc-side-item-title { font-weight: 700; font-size: var(--r-text-sm); line-height: var(--r-lh-tight); color: var(--r-ink); }
+.rtc-side-item-sub { font-size: var(--r-text-sm); color: var(--r-ink-soft); }
+.rtc-side-item-date { font-size: var(--r-text-sm); color: var(--r-ink-soft); }
+.rtc-side-desc { font-size: var(--r-text-sm); color: var(--r-ink); line-height: var(--r-lh); margin-top: 2px; }
+.rtc-side-desc ul { list-style: disc outside; margin: 2px 0; padding-left: 1.1em; }
+.rtc-side-desc ul li { margin: 1px 0; padding-left: 0.1em; }
+
 .rsp-cert-item { margin-bottom: var(--r-sp-2); }
 .rsp-cert-item:last-child { margin-bottom: 0; }
 .rsp-cert-name { font-weight: 700; font-size: var(--r-text-sm); color: var(--r-ink); }
@@ -1179,9 +1195,28 @@ main:focus { outline: none; }
 }
 
 @media print {
+  /* Every printed page after the first gets ~15mm of blank top/bottom
+     margin from the page box itself (not from any element's own padding),
+     so a page-2+ heading never starts flush at the paper edge and the
+     last page always has whitespace below its final line. Left/right
+     margin stays 0 so each template's own horizontal padding (--r-margin)
+     is what controls the visual side margins, and full-bleed header
+     bands (Modern, Split) still reach the left/right edges.
+
+     Page 1 keeps its current look — margin-top: 0 so a full-bleed header
+     band still touches the very top edge — with the template's own
+     padding still providing spacing around the header text. To avoid
+     doubling that up with the bottom margin now reserved on every page,
+     the templates' own bottom padding is removed below (kept only on
+     page 1's *top*, which is unaffected since box padding renders once
+     regardless of how many pages the box spans). */
   @page {
     size: A4;
-    margin: 0;
+    margin: 15mm 0;
+  }
+
+  @page :first {
+    margin-top: 0;
   }
 
   html,
@@ -1209,8 +1244,22 @@ main:focus { outline: none; }
     -webkit-print-color-adjust: exact !important;
   }
 
-  /* Don't split a single experience/education/project entry across a page
-     boundary mid-block. */
+  /* Remove each template's own bottom padding in print: the @page bottom
+     margin above already reserves that whitespace on every page,
+     including the last one, so keeping the container's own padding too
+     would double it up there. */
+  .resume-classic,
+  .resume-minimal,
+  .rmod-body,
+  .rexe-body,
+  .resume-sidebar,
+  .rsp-main,
+  .rsp-sidebar {
+    padding-bottom: 0 !important;
+  }
+
+  /* Don't split a single experience/education/project entry, or a
+     sidebar-style compact entry, across a page boundary mid-block. */
   .rmod-exp-item,
   .rmod-edu-item,
   .rcls-exp-item,
@@ -1221,8 +1270,23 @@ main:focus { outline: none; }
   .rsb-cert-item,
   .rsp-exp-item,
   .rsp-edu-item,
-  .rsp-cert-item {
+  .rsp-cert-item,
+  .rtc-side-item {
     break-inside: avoid;
+  }
+
+  /* Never leave a section heading stranded at the bottom of a page, cut
+     off from its first entry. */
+  .rmod-section-title,
+  .rcls-section-title,
+  .rmin-section-title,
+  .rexe-section-title,
+  .rsb-section-title,
+  .rsb-sidebar-title,
+  .rsp-section-title,
+  .rsp-sidebar-title,
+  .rtc-side-title {
+    break-after: avoid;
   }
 }
 
