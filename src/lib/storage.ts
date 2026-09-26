@@ -1,4 +1,5 @@
 import { emptyResumeData, type ResumeData } from '../types/resume';
+import { DEFAULT_SECTION_ORDER } from './sectionOrder';
 
 export const RESUME_STORAGE_KEY = 'workslab_resume_data';
 
@@ -14,6 +15,7 @@ const KNOWN_TOP_LEVEL_KEYS = [
   'awards',
   'customSections',
   'sectionOrder',
+  'sectionColumns',
   'accent',
 ] as const;
 
@@ -89,6 +91,36 @@ function sanitizeCustomSections(value: unknown) {
   return result;
 }
 
+const BUILT_IN_SECTION_KEYS = new Set<string>(DEFAULT_SECTION_ORDER);
+
+/**
+ * Sanitizes `sectionColumns`: keeps only entries whose key is a known
+ * built-in section or a `custom:<id>` key whose section actually exists
+ * (in the already-sanitized `customSections`), and whose value is exactly
+ * 'main' or 'side'. Everything else — unknown keys, bad values, dangling
+ * custom ids — is dropped silently. Returns undefined when nothing valid
+ * remains, so old data saved before this field existed still loads fine.
+ */
+function sanitizeSectionColumns(
+  value: unknown,
+  customSections: Array<{ id: string }>
+): Record<string, 'main' | 'side'> | undefined {
+  if (!isPlainObject(value)) return undefined;
+  const customIds = new Set(customSections.map((c) => c.id));
+  const result: Record<string, 'main' | 'side'> = {};
+
+  for (const [key, raw] of Object.entries(value)) {
+    if (raw !== 'main' && raw !== 'side') continue;
+    if (BUILT_IN_SECTION_KEYS.has(key)) {
+      result[key] = raw;
+    } else if (key.startsWith('custom:') && customIds.has(key.slice(7))) {
+      result[key] = raw;
+    }
+  }
+
+  return Object.keys(result).length > 0 ? result : undefined;
+}
+
 /**
  * Validates and sanitizes data coming from an imported .json file. Returns
  * null when the shape is not recognizably a resume export — callers should
@@ -104,6 +136,7 @@ export function validateResumeData(raw: unknown): ResumeData | null {
   if (!KNOWN_TOP_LEVEL_KEYS.some((k) => k in raw)) return null;
   if (raw.personal !== undefined && !isPlainObject(raw.personal)) return null;
   if (raw.summary !== undefined && typeof raw.summary !== 'string') return null;
+  if (raw.sectionColumns !== undefined && !isPlainObject(raw.sectionColumns)) return null;
   for (const field of ARRAY_FIELDS) {
     if (raw[field] !== undefined && !Array.isArray(raw[field])) return null;
   }
@@ -115,6 +148,8 @@ export function validateResumeData(raw: unknown): ResumeData | null {
   const accentRaw = stringField(raw.accent);
   const isValidHex = /^#[0-9a-fA-F]{6}$/.test(accentRaw);
   const accent = isValidHex ? accentRaw : undefined;
+
+  const customSections = sanitizeCustomSections(raw.customSections);
 
   return {
     personal: {
@@ -140,8 +175,9 @@ export function validateResumeData(raw: unknown): ResumeData | null {
     certifications: sanitizeEntryArray(raw.certifications, { name: '', org: '', year: '', url: '' }),
     languages: sanitizeEntryArray(raw.languages, { lang: '', level: '' }),
     awards: sanitizeEntryArray(raw.awards, { title: '', issuer: '', year: '', description: '' }),
-    customSections: sanitizeCustomSections(raw.customSections),
+    customSections,
     sectionOrder: sanitizeStringArray(raw.sectionOrder),
+    sectionColumns: sanitizeSectionColumns(raw.sectionColumns, customSections),
     accent,
   };
 }
