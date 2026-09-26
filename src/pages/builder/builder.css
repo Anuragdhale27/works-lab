@@ -697,10 +697,38 @@
   padding: 3px 6px;
   border-radius: 4px;
   transition: background var(--transition);
+  /* Fixed size so every ↑/↓ button lines up the same way regardless of
+     row content, and meets the desktop touch-target minimum. */
+  min-width: 32px;
+  min-height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .btn-move:hover {
   background: #f3f4f6;
+}
+
+.btn-move-column {
+  font-size: 0.75rem;
+  white-space: nowrap;
+  min-width: 64px;
+  padding: 3px 8px;
+}
+
+/* Both ↑/↓ and the column-move button need at least a 44px tap target on
+   touch-sized viewports (the dialog itself still fits at 390px — see
+   .section-order-dialog below). */
+@media (max-width: 480px) {
+  .btn-move {
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  .btn-move-column {
+    min-width: 68px;
+  }
 }
 
 .btn-remove {
@@ -771,27 +799,41 @@
   user-select: none;
 }
 
-.section-order-hint {
-  font-size: 0.875rem;
-  color: var(--gray-600);
-  margin-bottom: 12px;
+.section-order-column + .section-order-column {
+  margin-top: 20px;
 }
 
+.section-order-column-title {
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--gray-600);
+  margin-bottom: 8px;
+}
+
+/* Grid, not flex: every row is a `display: contents` wrapper whose two
+   children (the label, the actions group) become direct items of this
+   grid. That makes the actions column one consistent width — sized to the
+   widest actions group, which is the same fixed-size buttons on every row
+   — so every row's buttons line up on a single edge instead of wrapping
+   independently depending on how long that row's label happens to be. */
 .section-order-list {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  row-gap: 8px;
+  column-gap: 12px;
   margin-bottom: 16px;
 }
 
 .section-order-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding-right: 8px;
+  display: contents;
 }
 
 .section-order-label {
+  min-width: 0;
+  overflow-wrap: anywhere;
   font-size: 0.9rem;
 }
 
@@ -806,6 +848,7 @@
 .section-order-actions {
   display: flex;
   gap: 4px;
+  justify-self: end;
 }
 
 .skill-tags {

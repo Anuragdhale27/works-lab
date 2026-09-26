@@ -96,4 +96,58 @@ describe('validateResumeData', () => {
     expect(result).not.toBeNull();
     expect(result?.accent).toBeUndefined();
   });
+
+  it('loads old data without a sectionColumns field and returns undefined', () => {
+    const sample = { personal: { name: 'John Doe' }, summary: 'A summary' };
+    const result = validateResumeData(sample);
+    expect(result).not.toBeNull();
+    expect(result?.sectionColumns).toBeUndefined();
+  });
+
+  it('rejects sectionColumns that is not an object (e.g. a string)', () => {
+    const sample = { personal: { name: 'John Doe' }, sectionColumns: 'side' };
+    expect(validateResumeData(sample)).toBeNull();
+  });
+
+  it('keeps valid sectionColumns entries for built-in and existing custom sections', () => {
+    const sample = {
+      personal: { name: 'John Doe' },
+      customSections: [{ id: 'volunteering', title: 'Volunteering', items: [] }],
+      sectionColumns: {
+        education: 'main',
+        awards: 'side',
+        'custom:volunteering': 'side',
+      },
+    };
+    const result = validateResumeData(sample);
+    expect(result?.sectionColumns).toEqual({
+      education: 'main',
+      awards: 'side',
+      'custom:volunteering': 'side',
+    });
+  });
+
+  it('drops sectionColumns entries with an unknown key, a bad value, or a dangling custom id', () => {
+    const sample = {
+      personal: { name: 'John Doe' },
+      customSections: [],
+      sectionColumns: {
+        education: 'side',
+        notARealSection: 'side',
+        skills: 'diagonal',
+        'custom:missing': 'main',
+      },
+    };
+    const result = validateResumeData(sample);
+    expect(result?.sectionColumns).toEqual({ education: 'side' });
+  });
+
+  it('drops sectionColumns entirely when every entry is invalid, returning undefined', () => {
+    const sample = {
+      personal: { name: 'John Doe' },
+      sectionColumns: { notARealSection: 'side' },
+    };
+    const result = validateResumeData(sample);
+    expect(result?.sectionColumns).toBeUndefined();
+  });
 });

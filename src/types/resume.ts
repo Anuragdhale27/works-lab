@@ -81,6 +81,14 @@ export interface ResumeData {
   awards: AwardEntry[];
   customSections: CustomSection[];
   sectionOrder: string[];
+  /**
+   * Per-section override of which column (main/side) a section renders in,
+   * for the two two-column templates (Sidebar, Split). Keyed by built-in
+   * section key or `custom:<id>`. A section not present here uses the
+   * active template's default column. Ignored by single-column templates
+   * and by the Word export. See `src/lib/sectionColumns.ts`.
+   */
+  sectionColumns?: Record<string, 'main' | 'side'>;
   accent?: string;
 }
 
@@ -105,6 +113,7 @@ export const emptyResumeData: ResumeData = {
   awards: [],
   customSections: [],
   sectionOrder: [],
+  sectionColumns: undefined,
   accent: undefined,
 };
 
