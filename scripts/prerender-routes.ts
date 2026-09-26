@@ -150,7 +150,7 @@ function generateJsonLd(): string {
     '@id': `${SITE_URL}/#organization`,
     name: 'Works Lab',
     url: SITE_URL,
-    logo: `${SITE_URL}/favicon.svg`,
+    logo: `${SITE_URL}/icon-512.png`,
   };
 
   const website = {
